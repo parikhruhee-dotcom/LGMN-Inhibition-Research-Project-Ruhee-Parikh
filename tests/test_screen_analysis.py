@@ -218,3 +218,87 @@ class TestDatasetComparison:
         result = compare(before, after)
         assert result["best_before"]["model"] != "mean_baseline"
         assert "mean_baseline" not in set(result["table"]["model"])
+
+
+class TestMechanismSplit:
+    """Splitting by mechanism is what recovered a real result from a null one.
+
+    Across the whole set, docking score and potency showed no relationship
+    once ligand size was controlled for. Within the non-covalent subset it
+    did. The scoring function has no term for covalent bond formation, so
+    averaging the two populations hides signal in the minority under noise
+    from the majority.
+    """
+
+    def _frame(self, n_cov: int = 60, n_non: int = 20, seed: int = 0):
+        """Docking tracks potency for non-covalent compounds only."""
+        rng = np.random.default_rng(seed)
+        rows = []
+        for _ in range(n_non):
+            pic50 = rng.uniform(5, 10)
+            rows.append(
+                {
+                    "molecule_chembl_id": f"NC{len(rows)}",
+                    "affinity": -pic50 * 0.6 + rng.normal(0, 0.2),
+                    "pic50": pic50,
+                    "covalent": False,
+                    "heavy_atoms": rng.uniform(20, 40),
+                    "in_active_site": True,
+                }
+            )
+        for _ in range(n_cov):
+            rows.append(
+                {
+                    "molecule_chembl_id": f"CV{len(rows)}",
+                    "affinity": rng.uniform(-9, -5),   # unrelated to potency
+                    "pic50": rng.uniform(5, 10),
+                    "covalent": True,
+                    "heavy_atoms": rng.uniform(20, 40),
+                    "in_active_site": True,
+                }
+            )
+        frame = pd.DataFrame(rows)
+        scores = frame[
+            ["molecule_chembl_id", "affinity", "in_active_site"]
+        ].copy()
+        dataset = frame[
+            ["molecule_chembl_id", "pic50", "covalent", "heavy_atoms"]
+        ].copy()
+        return scores, dataset
+
+    def test_finds_signal_in_the_subset_that_has_it(self):
+        from docking.analyse_screen import analyse
+
+        scores, dataset = self._frame()
+        result = analyse(scores, dataset)
+        subsets = result["size_controlled_subsets"]
+        assert subsets["non_covalent"]["survives_size_control"]
+        assert not subsets["covalent"]["survives_size_control"]
+
+    def test_whole_set_can_look_null_while_a_subset_does_not(self):
+        """The exact failure mode: a real effect averaged into invisibility."""
+        from docking.analyse_screen import analyse
+
+        scores, dataset = self._frame(n_cov=120, n_non=15)
+        result = analyse(scores, dataset)
+        non_cov = result["size_controlled_subsets"]["non_covalent"]
+        assert non_cov["survives_size_control"]
+        assert abs(non_cov["partial_rho"]) > abs(
+            result["size_controlled"]["partial_rho"]
+        )
+
+    def test_subset_sizes_add_up(self):
+        from docking.analyse_screen import analyse
+
+        scores, dataset = self._frame(n_cov=60, n_non=20)
+        result = analyse(scores, dataset)
+        assert result["n_non_covalent"] == 20
+        assert result["n_scored"] == 80
+
+    def test_small_subset_is_reported_as_unevaluated_not_as_zero(self):
+        """Too few compounds must yield no estimate rather than a fake one."""
+        from docking.analyse_screen import analyse
+
+        scores, dataset = self._frame(n_cov=40, n_non=3)
+        result = analyse(scores, dataset)
+        assert result["size_controlled_subsets"]["non_covalent"] == {}
