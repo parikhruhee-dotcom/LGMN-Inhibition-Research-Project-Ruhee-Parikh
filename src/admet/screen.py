@@ -403,7 +403,7 @@ def main() -> int:
     print(f"Non-covalent AND CNS-ok:   {both}")
     print(f"PAINS alerts:              {int(ranked['pains_alerts'].gt(0).sum())}")
 
-    print(f"\nTop 10 by composite score:")
+    print("\nTop 10 by composite score:")
     columns = [
         "molecule_chembl_id", "pic50", "cns_mpo", "bbb_rules_passed",
         "covalent", "composite_score",

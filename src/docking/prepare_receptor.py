@@ -33,7 +33,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
-from Bio.PDB import MMCIFParser, PDBIO, Select
+from Bio.PDB import PDBIO, MMCIFParser, Select
 
 ROOT = Path(__file__).resolve().parents[2]
 PROCESSED = ROOT / "data" / "processed"

@@ -278,7 +278,9 @@ def covalent_ligand_links(cif_path: Path) -> set[str]:
     """
     try:
         cif = MMCIF2Dict.MMCIF2Dict(str(cif_path))
-    except Exception:
+    except (ValueError, KeyError, IndexError, UnicodeDecodeError):
+        # A malformed or truncated mmCIF means no covalent annotation is
+        # available; geometry still decides covalency, so this is recoverable.
         return set()
 
     conn_types = cif.get("_struct_conn.conn_type_id", [])
@@ -383,7 +385,7 @@ def survey_structure(pdb_id: str) -> list[dict]:
                  "covalent_annotated": None, "covalent_by_geometry": None}]
 
     rows = []
-    for name, chain_id, resseq, coords, n_atoms, distance in ligands:
+    for name, chain_id, resseq, _coords, n_atoms, distance in ligands:
         # Geometry first, annotation second: a bond length to the catalytic
         # thiol proves a covalent adduct whether or not it was declared.
         bonded_by_geometry = (
@@ -459,9 +461,9 @@ def write_target_doc(survey: pd.DataFrame, template: dict) -> None:
         "",
     ]
 
-    dyad_counts = (
-        mature_df := survey[survey["n_dyads"].gt(0)]
-    ).drop_duplicates("pdb_id")[["dyad_cys", "dyad_his", "dyad_distance"]]
+    dyad_counts = survey[survey["n_dyads"].gt(0)].drop_duplicates("pdb_id")[
+        ["dyad_cys", "dyad_his", "dyad_distance"]
+    ]
     if not dyad_counts.empty:
         consensus = dyad_counts.mode().iloc[0]
         lines += [

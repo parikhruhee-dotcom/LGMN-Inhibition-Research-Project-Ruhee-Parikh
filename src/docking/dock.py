@@ -1,31 +1,34 @@
-"""Dock compounds into LGMN with smina, after validating the protocol.
+"""Dock compounds into LGMN with smina, using the validated template.
 
-The validation step is not optional decoration. A docking setup with a
-misplaced box, a mangled receptor or bad ligand protonation still produces
-confident-looking scores for everything, and nothing in the output reveals it.
-Redocking the crystallographic ligand and measuring RMSD to its known pose is
-the one available check that the protocol reproduces reality. Convention takes
-RMSD < 2.0 A as success; this script refuses to run a screen if redocking
-fails, unless explicitly overridden.
+Redocking lives in `validate_protocol.py`, which measures every candidate
+template and records the result; this script reads that verdict rather than
+repeating the work, so the two cannot disagree. If the protocol did not
+reproduce its crystal pose as the top-ranked result, the screen refuses to run
+without `--force`.
+
+On this target it does not, and the screen is run anyway with `--force` for a
+specific reason: docking every compound whose potency is already known gives a
+direct measurement of whether docking score relates to potency here at all.
+The Spearman correlation it prints is the answer, reported in `docs/DOCKING.md`
+instead of being assumed in either direction.
 
 Each docked compound also gets the distance from its best pose to the
 catalytic thiol. A compound can score well while sitting in a surface groove
 at the edge of the box, and that number separates a real active-site pose from
-a score that happens to be low.
+a score that merely happens to be low.
 
 Writes:
-    results/docking/redock_validation.json
     results/docking/docking_scores.csv
     results/docking/poses/<id>.sdf
 
 Usage:
-    python src/docking/dock.py --validate-only
-    python src/docking/dock.py [--limit N] [--exhaustiveness N]
+    python src/docking/dock.py [--force] [--limit N] [--exhaustiveness N]
 """
 
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import subprocess
 import sys
@@ -114,10 +117,10 @@ def embed_3d(smiles: str, seed: int = 0) -> Chem.Mol | None:
         params.useRandomCoords = True
         if AllChem.EmbedMolecule(mol, params) != 0:
             return None
-    try:
+    # MMFF has no parameters for some atom types (boron, certain hypervalent
+    # sulfur); an unrelaxed ETKDG conformer still docks acceptably.
+    with contextlib.suppress(ValueError, RuntimeError):
         AllChem.MMFFOptimizeMolecule(mol, maxIters=500)
-    except (ValueError, RuntimeError):
-        pass
     return mol
 
 
@@ -206,12 +209,32 @@ def screen(
     compounds: pd.DataFrame,
     exhaustiveness: int,
     limit: int | None = None,
+    resume: bool = True,
 ) -> pd.DataFrame:
-    """Dock a table of compounds, returning scores and pose geometry."""
+    """Dock a table of compounds, returning scores and pose geometry.
+
+    Results are checkpointed to disk as they are produced and completed
+    compounds are skipped on a restart. A full screen takes about 95 seconds
+    per compound on two cores -- roughly five hours for this dataset -- and
+    writing only at the end would throw all of it away if the container
+    stopped partway.
+    """
     box = load_box()
     thiol = catalytic_thiol_coord()
     pose_dir = RESULTS / "poses"
     pose_dir.mkdir(parents=True, exist_ok=True)
+    checkpoint = RESULTS / "docking_scores.partial.csv"
+
+    done: dict[str, dict] = {}
+    if resume and checkpoint.exists():
+        previous = pd.read_csv(checkpoint)
+        done = {
+            str(row["molecule_chembl_id"]): dict(row)
+            for _, row in previous.iterrows()
+            if row.get("status") == "ok"
+        }
+        if done:
+            print(f"  resuming: {len(done)} compounds already scored")
 
     if limit:
         compounds = compounds.head(limit)
@@ -221,6 +244,10 @@ def screen(
     for counter, row in enumerate(compounds.itertuples(index=False), start=1):
         identifier = getattr(row, "molecule_chembl_id", None) or f"cmpd_{counter}"
         smiles = row.smiles
+
+        if identifier in done:
+            rows.append(done[identifier])
+            continue
 
         mol = embed_3d(smiles)
         if mol is None:
@@ -272,9 +299,14 @@ def screen(
         finally:
             ligand_path.unlink(missing_ok=True)
 
+        # Checkpoint every compound: the per-compound cost is a few
+        # milliseconds against 95 seconds of docking, so there is no reason to
+        # risk losing work to save it.
+        progress = pd.DataFrame(rows)
+        progress.to_csv(checkpoint, index=False)
+
         if counter % 10 == 0 or counter == total:
-            done = pd.DataFrame(rows)
-            ok = int((done["status"] == "ok").sum())
+            ok = int((progress["status"] == "ok").sum())
             print(f"  {counter}/{total} docked ({ok} scored)", flush=True)
 
     return pd.DataFrame(rows)

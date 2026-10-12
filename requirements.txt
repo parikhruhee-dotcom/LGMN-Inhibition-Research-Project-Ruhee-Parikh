@@ -19,3 +19,5 @@ requests
 # Notebooks
 jupyterlab
 ipykernel
+ruff
+pytest

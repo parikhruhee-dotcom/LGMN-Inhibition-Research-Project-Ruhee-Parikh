@@ -83,7 +83,7 @@ class TanimotoNearestNeighbour:
         self.fps: list = []
         self.y: np.ndarray = np.array([])
 
-    def fit(self, smiles: list[str], y: np.ndarray) -> "TanimotoNearestNeighbour":
+    def fit(self, smiles: list[str], y: np.ndarray) -> TanimotoNearestNeighbour:
         mols = [Chem.MolFromSmiles(s) for s in smiles]
         keep = [i for i, mol in enumerate(mols) if mol is not None]
         self.fps = [morgan_fingerprint(mols[i]) for i in keep]
@@ -309,7 +309,7 @@ def make_figures(summary: pd.DataFrame, predictions: pd.DataFrame) -> None:
             positions + offset,
             pivot[split],
             height=width,
-            xerr=errors[split] if split in errors else None,
+            xerr=errors.get(split),
             label=f"{split} split",
             color=colour,
             error_kw={"ecolor": "#555", "capsize": 3, "lw": 1},

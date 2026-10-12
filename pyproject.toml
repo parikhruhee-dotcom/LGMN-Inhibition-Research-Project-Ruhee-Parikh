@@ -1,0 +1,35 @@
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+# Correctness and clarity rules. Deliberately not "ALL": this codebase builds
+# documentation by assembling lists of string fragments, which trips the
+# implicit-string-concatenation rules 142 times without a single real defect.
+select = [
+    "E",      # pycodestyle
+    "F",      # pyflakes: undefined names, unused imports and variables
+    "I",      # import ordering
+    "B",      # bugbear: likely bugs
+    "UP",     # pyupgrade
+    "SIM",    # simplifiable constructs
+    "BLE",    # blind except
+    "C4",     # comprehension clarity
+]
+ignore = [
+    "E501",   # line length; the formatter and the prose comments govern this
+    "B905",   # zip(strict=) is not needed where lengths are checked already
+]
+
+[tool.ruff.lint.per-file-ignores]
+# The src/ modules are scripts run directly, so they insert their package root
+# onto sys.path before importing siblings. That import cannot precede the
+# sys.path call, which is exactly what E402 forbids.
+"src/**" = ["E402"]
+"tests/**" = ["E402"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# The suite must stay runnable without network access: the crystallographic
+# ground truth is committed as SMILES rather than fetched from RCSB.
+addopts = "-q"
