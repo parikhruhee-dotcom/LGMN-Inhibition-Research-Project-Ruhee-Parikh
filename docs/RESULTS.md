@@ -174,7 +174,7 @@ either an experiment or a larger dataset.
 |---|---|---|
 | Which structure should docking use? | 7FQI, chosen by measured redocking across all 5 candidates | `TARGET.md`, `DOCKING.md` |
 | Can the docking protocol reproduce a known pose? | No -- sampling finds it, scoring misranks it | `DOCKING.md` |
-| Can potency be predicted for new scaffolds? | Ranked weakly; absolute potency no (R2 < 0) | `RESULTS.md` |
+| Can potency be predicted for new scaffolds? | Ranked weakly (Spearman 0.47); absolute potency no (R2 -0.19) | `RESULTS.md` |
 | Do these compounds reach the inside of a cell? | Median 34-fold potency loss; molecular weight predicts it | `PERMEABILITY.md` |
 | Are they selective over related proteases? | Unknown for 176 of 180 | `SELECTIVITY.md` |
 | Is anything both brain-penetrant and non-covalent? | 6 compounds, but one series with a genotoxicity alert | `SHORTLIST.md` |

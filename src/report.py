@@ -366,6 +366,48 @@ def docking_section() -> list[str]:
     return lines
 
 
+def _model_verdict() -> str:
+    """Summarise model performance from the measured scores."""
+    summary = _read_csv(RESULTS / "models" / "summary.csv")
+    if summary is None:
+        return "not evaluated"
+    scaffold = summary[summary["split"].eq("scaffold")]
+    learned = scaffold[scaffold["model"].ne("mean_baseline")]
+    if learned.empty:
+        return "not evaluated"
+    best = learned.sort_values("mae_mean").iloc[0]
+    quality = "no" if best["r2_mean"] < 0.3 else "partly"
+    return (
+        f"Ranked weakly (Spearman {best['spearman_mean']:.2f}); "
+        f"absolute potency {quality} (R2 {best['r2_mean']:+.2f})"
+    )
+
+
+def _permeability_verdict() -> str:
+    stats = _read_json(PROCESSED / "permeability_stats.json")
+    if not stats:
+        return "not evaluated"
+    label = PROPERTY_LABELS.get(
+        stats.get("best_property"), stats.get("best_property")
+    )
+    tail = f"; {label.lower()} predicts it" if label else ""
+    return f"Median {stats['fold_loss']:.0f}-fold potency loss{tail}"
+
+
+def _selectivity_verdict() -> str:
+    selectivity = _read_csv(PROCESSED / "selectivity.csv")
+    dataset = _read_csv(PROCESSED / "lgmn_regression.csv")
+    if selectivity is None or dataset is None:
+        return "not evaluated"
+    tested = (
+        selectivity["molecule_chembl_id"].nunique()
+        if not selectivity.empty
+        else 0
+    )
+    total = dataset["molecule_chembl_id"].nunique()
+    return f"Unknown for {total - tested} of {total}"
+
+
 def results_section() -> list[str]:
     dataset = _read_csv(PROCESSED / "lgmn_regression.csv")
     summary = _read_csv(RESULTS / "models" / "summary.csv")
@@ -720,12 +762,12 @@ def results_section() -> list[str]:
         "redocking across all 5 candidates | `TARGET.md`, `DOCKING.md` |",
         "| Can the docking protocol reproduce a known pose? | No -- sampling "
         "finds it, scoring misranks it | `DOCKING.md` |",
-        "| Can potency be predicted for new scaffolds? | Ranked weakly; "
-        "absolute potency no (R2 < 0) | `RESULTS.md` |",
-        "| Do these compounds reach the inside of a cell? | Median 34-fold "
-        "potency loss; molecular weight predicts it | `PERMEABILITY.md` |",
-        "| Are they selective over related proteases? | Unknown for 176 of "
-        "180 | `SELECTIVITY.md` |",
+        "| Can potency be predicted for new scaffolds? | "
+        f"{_model_verdict()} | `RESULTS.md` |",
+        "| Do these compounds reach the inside of a cell? | "
+        f"{_permeability_verdict()} | `PERMEABILITY.md` |",
+        "| Are they selective over related proteases? | "
+        f"{_selectivity_verdict()} | `SELECTIVITY.md` |",
         "| Is anything both brain-penetrant and non-covalent? | 6 compounds, "
         "but one series with a genotoxicity alert | `SHORTLIST.md` |",
         "",
