@@ -5,7 +5,8 @@ measured from the deposited coordinates, not taken from a paper.
 
 - UniProt: **Q99538** (human legumain, asparaginyl endopeptidase)
 - Experimental PDB entries: **18**
-- Entries with an intact catalytic dyad (mature enzyme): **18**
+- Entries where a Cys/His dyad was located: **18**
+- Mature enzyme, prodomain absent: **17**
 
 ## Catalytic dyad
 
@@ -21,8 +22,15 @@ independent check that the detection is finding the real active site.
 
 ## Bound ligands
 
-Distance is from the ligand's nearest atom to the catalytic thiol. The
-covalent column reflects a `covale` bond declared in the mmCIF.
+Distance is from the ligand's nearest atom to the catalytic thiol.
+
+**The covalent column is decided by that distance, not by the mmCIF annotation.**
+A carbon-sulfur bond is about 1.8 A and the closest a non-bonded heavy atom comes
+to a thiol is about 3.3 A, so the geometry is unambiguous. The annotation is not:
+7FQI and 7FQJ place their inhibitor 1.67 A and 1.65 A from the catalytic thiol
+while declaring no `covale` record at all, whereas 7FQH and 7FQK annotate the
+equivalent bond properly. Trusting the deposited annotation classified two
+covalent inhibitors as non-covalent.
 
 | PDB | Res (A) | Ligand | Atoms | Dist to Cys SG (A) | Covalent |
 |---|---|---|---|---|---|
@@ -39,11 +47,17 @@ covalent column reflects a `covale` bond declared in the mmCIF.
 | 5LU9 | 2.27 | 3Y7 | 16 | 22.98 | no |
 | 7FQL | 2.53 | WSN | 36 | 1.77 | yes |
 
-## Chosen docking template
+## Candidate docking template
+
+This is a *proposal* from structure alone, not the template the project uses.
+`src/docking/validate_protocol.py` redocks the known ligand of every candidate and
+picks on measured performance, which selected a different structure -- see
+`docs/DOCKING.md`. The distinction matters: choosing on resolution and ligand type
+is a reasonable guess, and the guess turned out not to be the best performer.
 
 **5LUA** at 2.0 A, validating against ligand **5KN** (19 atoms, 3.22 A from the catalytic thiol).
 
-Chosen because it is the highest-resolution structure that has an intact
+Proposed because it is the highest-resolution structure that has an intact
 catalytic dyad *and* a non-covalent ligand in the active site. The second
 condition is what makes the docking protocol testable: a covalently bound
 warhead cannot be reproduced by a non-covalent scoring function, so a
