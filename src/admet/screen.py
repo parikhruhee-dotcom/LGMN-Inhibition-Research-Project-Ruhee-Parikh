@@ -386,16 +386,28 @@ def write_doc(df: pd.DataFrame) -> None:
         "renormalised",
         "rather than scoring the absence as zero.",
         "",
-        f"## Top {len(top)} compounds",
+        f"## Top {len(top)} compounds by composite score",
         "",
-        "| # | ChEMBL ID | pIC50 | CNS MPO | BBB rules | Covalent | "
+        "**Ranked by the composite score, which is dominated by measured "
+        "potency.** Most of",
+        "the compounds at the top of this table fail the CNS criteria, so "
+        "they are the most",
+        "potent legumain inhibitors known rather than the best candidates "
+        "for an Alzheimer's",
+        "programme. The CNS column says which is which; the section below "
+        "lists the ones",
+        "that pass.",
+        "",
+        "| # | ChEMBL ID | pIC50 | CNS | CNS MPO | BBB rules | Covalent | "
         "Dock (kcal/mol) | Score |",
-        "|---|---|---|---|---|---|---|---|",
+        "|---|---|---|---|---|---|---|---|---|",
     ]
     for index, row in enumerate(top.itertuples(index=False), start=1):
         affinity = getattr(row, "affinity", np.nan)
+        verdict = "pass" if getattr(row, "cns_candidate", False) else "fail"
         lines.append(
             f"| {index} | {row.molecule_chembl_id} | {row.pic50:.2f} | "
+            f"{verdict} | "
             f"{row.cns_mpo:.2f} | {row.bbb_rules_passed}/{row.bbb_rules_total} | "
             f"{'yes' if row.covalent else 'no'} | "
             f"{f'{affinity:.2f}' if pd.notna(affinity) else '-'} | "

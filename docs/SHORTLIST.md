@@ -30,35 +30,41 @@ The composite score weights measured potency (0.45), predicted CNS exposure
 Where a compound has no docking result the remaining weights are renormalised
 rather than scoring the absence as zero.
 
-## Top 25 compounds
+## Top 25 compounds by composite score
 
-| # | ChEMBL ID | pIC50 | CNS MPO | BBB rules | Covalent | Dock (kcal/mol) | Score |
-|---|---|---|---|---|---|---|---|
-| 1 | CHEMBL4545652 | 9.92 | 3.73 | 4/6 | yes | - | 0.814 |
-| 2 | CHEMBL5394077 | 9.70 | 3.76 | 4/6 | no | - | 0.792 |
-| 3 | CHEMBL5425743 | 9.70 | 3.67 | 4/6 | no | - | 0.785 |
-| 4 | CHEMBL5417499 | 9.40 | 4.05 | 4/6 | yes | - | 0.783 |
-| 5 | CHEMBL5420042 | 10.00 | 3.23 | 4/6 | no | - | 0.783 |
-| 6 | CHEMBL5413711 | 10.00 | 3.22 | 4/6 | no | - | 0.782 |
-| 7 | CHEMBL4438891 | 9.59 | 3.73 | 4/6 | yes | - | 0.778 |
-| 8 | CHEMBL5412556 | 9.70 | 3.57 | 4/6 | yes | - | 0.777 |
-| 9 | CHEMBL5402155 | 9.70 | 3.50 | 4/6 | no | - | 0.772 |
-| 10 | CHEMBL5427662 | 9.70 | 3.50 | 3/6 | yes | - | 0.772 |
-| 11 | CHEMBL5399092 | 8.41 | 5.17 | 5/6 | yes | - | 0.766 |
-| 12 | CHEMBL5436295 | 9.00 | 4.35 | 4/6 | yes | - | 0.764 |
-| 13 | CHEMBL5407269 | 9.05 | 4.22 | 4/6 | yes | - | 0.759 |
-| 14 | CHEMBL5415768 | 9.52 | 3.50 | 4/6 | no | - | 0.753 |
-| 15 | CHEMBL5402221 | 9.70 | 3.23 | 4/6 | no | - | 0.751 |
-| 16 | CHEMBL5427707 | 9.00 | 4.18 | 5/6 | yes | - | 0.750 |
-| 17 | CHEMBL5396516 | 9.00 | 3.90 | 4/6 | yes | - | 0.728 |
-| 18 | CHEMBL4556228 | 9.33 | 3.39 | 4/6 | yes | - | 0.723 |
-| 19 | CHEMBL5406157 | 9.10 | 3.69 | 5/6 | yes | - | 0.723 |
-| 20 | CHEMBL5434439 | 8.38 | 4.66 | 4/6 | yes | - | 0.721 |
-| 21 | CHEMBL5419921 | 9.22 | 3.50 | 4/6 | no | - | 0.721 |
-| 22 | CHEMBL5419035 | 8.66 | 4.23 | 3/6 | yes | - | 0.718 |
-| 23 | CHEMBL4549828 | 8.89 | 3.90 | 5/6 | yes | - | 0.717 |
-| 24 | CHEMBL5431473 | 8.47 | 4.46 | 4/6 | yes | - | 0.716 |
-| 25 | CHEMBL5399304 | 9.30 | 3.30 | 3/6 | yes | - | 0.714 |
+**Ranked by the composite score, which is dominated by measured potency.** Most of
+the compounds at the top of this table fail the CNS criteria, so they are the most
+potent legumain inhibitors known rather than the best candidates for an Alzheimer's
+programme. The CNS column says which is which; the section below lists the ones
+that pass.
+
+| # | ChEMBL ID | pIC50 | CNS | CNS MPO | BBB rules | Covalent | Dock (kcal/mol) | Score |
+|---|---|---|---|---|---|---|---|---|
+| 1 | CHEMBL4545652 | 9.92 | fail | 3.73 | 4/6 | yes | - | 0.814 |
+| 2 | CHEMBL5394077 | 9.70 | fail | 3.76 | 4/6 | no | - | 0.792 |
+| 3 | CHEMBL5425743 | 9.70 | fail | 3.67 | 4/6 | no | - | 0.785 |
+| 4 | CHEMBL5417499 | 9.40 | fail | 4.05 | 4/6 | yes | - | 0.783 |
+| 5 | CHEMBL5420042 | 10.00 | fail | 3.23 | 4/6 | no | - | 0.783 |
+| 6 | CHEMBL5413711 | 10.00 | fail | 3.22 | 4/6 | no | - | 0.782 |
+| 7 | CHEMBL4438891 | 9.59 | fail | 3.73 | 4/6 | yes | - | 0.778 |
+| 8 | CHEMBL5412556 | 9.70 | fail | 3.57 | 4/6 | yes | - | 0.777 |
+| 9 | CHEMBL5402155 | 9.70 | fail | 3.50 | 4/6 | no | - | 0.772 |
+| 10 | CHEMBL5427662 | 9.70 | fail | 3.50 | 3/6 | yes | - | 0.772 |
+| 11 | CHEMBL5399092 | 8.41 | pass | 5.17 | 5/6 | yes | - | 0.766 |
+| 12 | CHEMBL5436295 | 9.00 | fail | 4.35 | 4/6 | yes | - | 0.764 |
+| 13 | CHEMBL5407269 | 9.05 | fail | 4.22 | 4/6 | yes | - | 0.759 |
+| 14 | CHEMBL5415768 | 9.52 | fail | 3.50 | 4/6 | no | - | 0.753 |
+| 15 | CHEMBL5402221 | 9.70 | fail | 3.23 | 4/6 | no | - | 0.751 |
+| 16 | CHEMBL5427707 | 9.00 | pass | 4.18 | 5/6 | yes | - | 0.750 |
+| 17 | CHEMBL5396516 | 9.00 | fail | 3.90 | 4/6 | yes | - | 0.728 |
+| 18 | CHEMBL4556228 | 9.33 | fail | 3.39 | 4/6 | yes | - | 0.723 |
+| 19 | CHEMBL5406157 | 9.10 | fail | 3.69 | 5/6 | yes | - | 0.723 |
+| 20 | CHEMBL5434439 | 8.38 | fail | 4.66 | 4/6 | yes | - | 0.721 |
+| 21 | CHEMBL5419921 | 9.22 | fail | 3.50 | 4/6 | no | - | 0.721 |
+| 22 | CHEMBL5419035 | 8.66 | fail | 4.23 | 3/6 | yes | - | 0.718 |
+| 23 | CHEMBL4549828 | 8.89 | fail | 3.90 | 5/6 | yes | - | 0.717 |
+| 24 | CHEMBL5431473 | 8.47 | fail | 4.46 | 4/6 | yes | - | 0.716 |
+| 25 | CHEMBL5399304 | 9.30 | fail | 3.30 | 3/6 | yes | - | 0.714 |
 
 ## Non-covalent compounds meeting the CNS criteria
 
