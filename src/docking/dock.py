@@ -59,6 +59,9 @@ DEFAULT_EXHAUSTIVENESS = 8
 # not engaging the catalytic machinery, whatever it scored.
 ACTIVE_SITE_CONTACT = 6.0
 
+# Fixed so the docking order is reproducible across runs and restarts.
+SHUFFLE_SEED = 0
+
 
 def selected_template() -> dict:
     """The template chosen by validate_protocol.py."""
@@ -218,6 +221,14 @@ def screen(
     per compound on two cores -- roughly five hours for this dataset -- and
     writing only at the end would throw all of it away if the container
     stopped partway.
+
+    Compounds are docked in a deterministic shuffled order rather than the
+    order they arrive in. The input is sorted by potency, so processing it
+    as-is makes any interrupted run a sample of only the most potent
+    compounds: a first attempt reached 31 compounds spanning pIC50 8.74-10.00
+    against a full-set range of 5.03-10.00. Correlating docking score against
+    potency over that restricted range would be meaningless. Shuffling makes
+    every prefix an unbiased sample, and the fixed seed keeps it reproducible.
     """
     box = load_box()
     thiol = catalytic_thiol_coord()
@@ -235,6 +246,9 @@ def screen(
         }
         if done:
             print(f"  resuming: {len(done)} compounds already scored")
+
+    # Shuffle before any limiting so a --limit run is also representative.
+    compounds = compounds.sample(frac=1.0, random_state=SHUFFLE_SEED)
 
     if limit:
         compounds = compounds.head(limit)
