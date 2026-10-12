@@ -51,6 +51,7 @@ from data.prepare_dataset import (  # noqa: E402
 from data.standardize import (  # noqa: E402
     basic_properties,
     find_warheads,
+    inchikey,
     is_covalent,
     standardize_mol,
 )
@@ -283,7 +284,17 @@ def main() -> int:
         print("No usable PubChem potency data after filtering.")
         return 0
 
-    overlap = pubchem["smiles"].isin(set(chembl["smiles"]))
+    # Identity by InChIKey, not SMILES. PubChem and ChEMBL draw the same
+    # molecule in different tautomeric forms, and canonical SMILES preserves
+    # that difference: four thiouracils passed as "new" compounds that were
+    # already in the set, and three of them went on to qualify as CNS
+    # candidates, which would have inflated the project's headline result.
+    chembl_keys = {k for k in (inchikey(s) for s in chembl["smiles"]) if k}
+    pubchem_keys = [inchikey(s) for s in pubchem["smiles"]]
+    overlap = pd.Series(
+        [k is not None and k in chembl_keys for k in pubchem_keys],
+        index=pubchem.index,
+    )
     novel = pubchem[~overlap]
 
     print(f"\nPubChem compounds with usable potency: {len(pubchem)}")

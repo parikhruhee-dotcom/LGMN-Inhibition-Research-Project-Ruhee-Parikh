@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from data.standardize import (  # noqa: E402
     basic_properties,
     find_warheads,
+    inchikey,
     is_covalent,
     standardize_mol,
     standardize_smiles,
@@ -236,3 +237,43 @@ class TestProperties:
         props = basic_properties(standardize_mol("c1ccccc1"))
         assert props["rotb"] == 0
         assert props["arom_rings"] == 1
+
+
+class TestCrossSourceIdentity:
+    """Canonical SMILES is not a safe identity key across data sources.
+
+    Merging PubChem into the ChEMBL set on canonical SMILES let four
+    thiouracil tautomers through as "new" compounds that were already
+    present. Three of them then qualified as CNS candidates, which would have
+    inflated the project's headline result from 6 to 10. The same failure
+    would place one compound on both sides of a train/test split.
+    """
+
+    # The same thiouracil, drawn with the mobile hydrogen in two places.
+    TAUTOMER_A = "Cn1c(=O)c2c([nH]c(=S)n2C)n(C)c1=O"
+    TAUTOMER_B = "Cn1c(=O)c2c(nc(S)n2C)n(C)c1=O"
+
+    def test_tautomers_give_different_canonical_smiles(self):
+        """The premise of the bug: SMILES does not collapse these."""
+        assert standardize_smiles(self.TAUTOMER_A) != standardize_smiles(
+            self.TAUTOMER_B
+        )
+
+    def test_inchikey_collapses_them(self):
+        assert inchikey(self.TAUTOMER_A) == inchikey(self.TAUTOMER_B)
+
+    def test_inchikey_still_separates_genuinely_different_molecules(self):
+        """The key must not collapse so much that distinct compounds merge."""
+        assert inchikey("c1ccccc1O") != inchikey("c1ccccc1N")
+
+    def test_inchikey_separates_enantiomers(self):
+        """Stereoisomers are different compounds and must stay distinct."""
+        assert inchikey("C[C@H](N)C(=O)O") != inchikey("C[C@@H](N)C(=O)O")
+
+    def test_inchikey_matches_across_salt_forms(self):
+        """Standardisation runs first, so a salt and its parent agree."""
+        assert inchikey("CCN.Cl") == inchikey("CCN")
+
+    def test_invalid_input_returns_none(self):
+        assert inchikey("not_a_molecule") is None
+        assert inchikey("") is None

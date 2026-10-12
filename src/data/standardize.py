@@ -130,6 +130,29 @@ def standardize_smiles(smiles: str) -> str | None:
     return Chem.MolToSmiles(mol)
 
 
+def inchikey(smiles: str) -> str | None:
+    """InChIKey for a structure, used as the identity key when merging sources.
+
+    Canonical SMILES is not a safe identity key across data sources, because
+    two depositors can draw the same molecule in different tautomeric forms
+    and RDKit will canonicalise each form to a different string. Merging
+    ChEMBL with PubChem on SMILES let four thiouracil tautomers through as
+    "new" compounds that were already present, and the same failure would put
+    a compound on both sides of a train/test split.
+
+    InChI normalises mobile hydrogens, so it collapses those cases. SMILES
+    remains the stored representation; this is only the comparison key.
+    """
+    mol = standardize_mol(smiles)
+    if mol is None:
+        return None
+    try:
+        key = Chem.MolToInchiKey(mol)
+    except Exception:  # noqa: BLE001 - InChI can fail on exotic valences
+        return None
+    return key or None
+
+
 def find_warheads(mol: Chem.Mol) -> list[str]:
     """Return labels of every electrophilic warhead class present."""
     if mol is None:
