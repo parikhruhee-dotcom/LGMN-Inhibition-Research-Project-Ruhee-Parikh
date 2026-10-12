@@ -36,6 +36,39 @@ COVALENT_WARHEADS: list[tuple[str, str]] = [
     ("vinyl_heteroaryl", "[CX3]=[CX3]c1[n;R][c;R][c;R][o,s,n;R]1"),
     # Aza-peptidyl Michael acceptor / aspartyl vinyl systems
     ("alpha_beta_unsaturated_ester", "[CX3]=[CX3][CX3](=O)O[#6]"),
+    # Propargyl (terminal alkyne) at the P1 warhead position.
+    #
+    # Found by inspection, not by anticipating it: three compounds that this
+    # table originally called non-covalent are
+    # C#C[C@H](CC(N)=O)NC(=O)... -- a terminal alkyne on the carbon carrying
+    # an asparagine-mimicking side chain. The crystallographic warheads in
+    # 7FQH and 7FQK are N-[(3S)-5-amino-5-oxopent-1-en-3-yl] systems, the
+    # vinyl analogues of precisely that scaffold, so these are the alkyne
+    # members of a known covalent series and were being presented as the
+    # project's best non-covalent leads.
+    #
+    # The pattern requires the alkyne to sit alpha to an amide nitrogen, which
+    # is the activated arrangement. A bare terminal alkyne is not flagged:
+    # ethinylestradiol carries one and is not a cysteine-reactive electrophile.
+    ("propargyl_amide", "[CH1X2]#[CX2][CX4][NX3][CX3]=[OX1]"),
+    # Free thiol: exchanges with the catalytic cysteine to form a disulfide.
+    ("thiol", "[#6][SX2H1]"),
+    # The two warhead motifs observed covalently bound in the LGMN crystal
+    # structures, which no general-purpose electrophile pattern catches
+    # because neither is conjugated to an electron-withdrawing group.
+    #
+    # WR9 in 7FQH is C=C[C@H](CC(=O)N)NC(=O)... -- a terminal vinyl on the
+    # carbon bearing the P1 amide nitrogen -- and sits 1.73 A from the
+    # catalytic thiol. WSN in 7FQI is the same scaffold with N=C in place of
+    # C=C, at 1.67 A; it is the thioimidate adduct of a nitrile inhibitor, so
+    # the deposited component is the post-reaction species.
+    #
+    # Both are bond lengths, not inferences. Any molecule presenting these
+    # motifs in a screening library is a covalent species, so the detector is
+    # made to agree with the crystallography rather than with what a textbook
+    # Michael-acceptor rule would predict.
+    ("vinyl_p1_amide", "[CH2X3]=[CH1X3][CX4][NX3][CX3]=[OX1]"),
+    ("aldimine_p1_amide", "[NX2]=[CH1X3][CX4][NX3][CX3]=[OX1]"),
     # Epoxide and aziridine
     ("epoxide", "[OX2r3]1[#6r3][#6r3]1"),
     ("aziridine", "[NX3r3]1[#6r3][#6r3]1"),

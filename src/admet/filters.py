@@ -220,6 +220,28 @@ def bbb_rules(mol: Chem.Mol) -> dict:
     }
 
 
+# A compound must clear both the MPO score and most of the rule checks to be
+# called a CNS candidate.
+#
+# Neither test alone is sufficient, and the failure mode is concrete: sucrose
+# scores exactly 4.0 on CNS MPO and so "passes". That is not a bug in the
+# implementation -- the clogP, clogD and pKa desirability functions all reward
+# low lipophilicity monotonically, so an extremely polar sugar collects three
+# free points and needs only one more to reach the threshold. MPO was designed
+# to rank drug-like candidates against each other, not to reject molecules
+# nothing would mistake for drugs. The rule checks catch exactly that case:
+# sucrose passes 3 of 6, diazepam all 6.
+MIN_BBB_RULES = 5
+
+
+def cns_candidate(row: dict) -> bool:
+    """Combined CNS verdict: MPO score and rule checks must both hold."""
+    return bool(
+        row.get("cns_mpo_pass")
+        and row.get("bbb_rules_passed", 0) >= MIN_BBB_RULES
+    )
+
+
 def profile(smiles: str) -> dict | None:
     """Full ADMET profile for one SMILES, or None if unparseable."""
     mol = Chem.MolFromSmiles(smiles)
@@ -236,5 +258,6 @@ def profile(smiles: str) -> dict | None:
     bbb_checks = [v for k, v in row.items() if k.startswith("bbb_")]
     row["bbb_rules_passed"] = int(sum(bool(v) for v in bbb_checks))
     row["bbb_rules_total"] = len(bbb_checks)
+    row["cns_candidate"] = cns_candidate(row)
     row["qed"] = Descriptors.qed(mol)
     return row
