@@ -1,0 +1,21 @@
+# Core scientific stack
+numpy
+pandas
+scipy
+matplotlib
+seaborn
+
+# Cheminformatics
+rdkit
+
+# Machine learning
+scikit-learn
+xgboost
+
+# Data sources (ChEMBL / UniProt / PDB APIs)
+chembl-webresource-client
+requests
+
+# Notebooks
+jupyterlab
+ipykernel

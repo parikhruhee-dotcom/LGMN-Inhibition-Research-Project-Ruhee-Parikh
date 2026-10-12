@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Large data and outputs — keep the folders, not the contents
+data/raw/*
+data/processed/*
+!data/**/.gitkeep
+
+results/models/*
+results/docking/*
+!results/**/.gitkeep
+
+# Docking scratch
+*.pdbqt
+*.dlg
+*.gpf
+*.dpf
+autogrid.log
+autodock.log
+
+# OS
+.DS_Store
+.conda-env/
