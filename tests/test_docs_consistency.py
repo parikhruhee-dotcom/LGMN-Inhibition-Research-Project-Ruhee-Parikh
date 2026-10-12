@@ -168,3 +168,48 @@ class TestHonestyMarkers:
     def test_documentation_links_resolve(self, readme):
         for link in re.findall(r"\]\((docs/[^)]+)\)", readme):
             assert (ROOT / link).exists(), f"README links to missing {link}"
+
+
+class TestCrossDocumentClaims:
+    """Repeated numeric claims must match the data they came from.
+
+    Several numbers appear in three or four documents at once -- the
+    permeability loss, the selectivity coverage, the size of the non-covalent
+    subset. Each was correct when written, and each would stay written after
+    a rerun moved it. This checks them against the files they describe.
+    """
+
+    def test_permeability_loss(self, readme):
+        paired = _load(PROCESSED / "permeability_gap.csv")
+        fold = round(10 ** paired["cell_gap"].median())
+        assert f"{fold}-fold" in readme
+
+    def test_paired_sample_size(self, readme):
+        paired = _load(PROCESSED / "permeability_gap.csv")
+        assert f"n={len(paired)}" in readme
+
+    def test_selectivity_coverage(self, readme):
+        selectivity = _load(PROCESSED / "selectivity.csv")
+        dataset = _load(PROCESSED / "lgmn_regression.csv")
+        untested = dataset["molecule_chembl_id"].nunique() - (
+            selectivity["molecule_chembl_id"].nunique()
+        )
+        assert f"{untested} of {dataset['molecule_chembl_id'].nunique()}" in readme
+
+    def test_non_covalent_subset_size_is_consistent(self):
+        """The docking finding rests on this count; it appears in two docs."""
+        dataset = _load(PROCESSED / "lgmn_regression.csv")
+        count = int((~dataset["covalent"].fillna(False).astype(bool)).sum())
+        docking = ROOT / "docs" / "DOCKING.md"
+        plan = ROOT / "docs" / "PLAN.md"
+        for path in (docking, plan):
+            if path.exists() and "non-covalent" in path.read_text():
+                assert str(count) in path.read_text(), (
+                    f"{path.name} should state the {count}-compound "
+                    "non-covalent subset"
+                )
+
+    def test_covalent_fraction(self, readme):
+        dataset = _load(PROCESSED / "lgmn_regression.csv")
+        covalent = int(dataset["covalent"].sum())
+        assert f"**{covalent} (" in readme
