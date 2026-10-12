@@ -64,6 +64,12 @@ Three things sharpen that conclusion rather than soften it:
   about twice as strong for non-covalent compounds (ρ = -0.50) as for covalent ones
   (ρ = -0.22). An earlier reading from half the data said covalent compounds showed no
   link at all; the full data overturned it ([docs/DOCKING.md](docs/DOCKING.md)).
+- **A screen of 3,417 approved drugs found nothing usable.** Over a thousand reach the
+  brain and carry no reactive group, yet only one is close enough to legumain chemistry
+  for the model to judge: caffeine, which clears the filters only because the dataset
+  contains caffeine-with-a-sulfur-added. Docking cannot separate the two — it ranks the
+  *confirmed* inhibitor below caffeine — so three methods failed on one question and an
+  enzyme assay would settle it ([docs/REPURPOSING.md](docs/REPURPOSING.md)).
 - **The data ceiling is real, not an artefact of using one database.** Searching
   PubChem as well added 5 compounds and 3 scaffolds, and retraining on them changed
   nothing measurable (p = 0.98). An earlier version of that comparison appeared to show
