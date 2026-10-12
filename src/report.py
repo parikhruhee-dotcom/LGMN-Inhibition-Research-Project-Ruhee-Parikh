@@ -405,6 +405,29 @@ def results_section() -> list[str]:
             f"{dataset['pic50'].max():.2f}, "
             f"median {dataset['pic50'].median():.2f}",
             "",
+            "### Two compound sets, and which is used where",
+            "",
+            "Numbers in this project refer to one of two sets, so it is worth "
+            "stating which",
+            "is which before they appear side by side:",
+            "",
+            f"- **The modelling set ({len(dataset)} compounds)** comes from "
+            "ChEMBL alone. Every record",
+            "  carries assay metadata -- organism, assay format, target "
+            "confidence -- which is",
+            "  what makes it possible to separate enzymatic from cellular "
+            "measurements. All",
+            "  model training and evaluation uses this set.",
+            "- **The combined set** adds compounds found in PubChem but "
+            "absent from ChEMBL.",
+            "  It is used for ADMET profiling and the shortlist, where no "
+            "assay metadata is",
+            "  needed. Training on it was tried and made no measurable "
+            "difference",
+            "  (`docs/DATA_EXPANSION.md`), so the modelling set was kept as "
+            "the basis for",
+            "  reported model performance.",
+            "",
             "See `docs/DATASET.md`. The one change that mattered most was "
             "separating",
             "cell-based from enzymatic assays before aggregating replicates: "

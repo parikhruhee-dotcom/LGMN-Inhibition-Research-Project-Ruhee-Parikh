@@ -20,6 +20,21 @@ geometry and why a distance cutoff cannot be used to identify it.
 - Covalent warhead: **153** (85%)
 - pIC50 5.03-10.00, median 7.47
 
+### Two compound sets, and which is used where
+
+Numbers in this project refer to one of two sets, so it is worth stating which
+is which before they appear side by side:
+
+- **The modelling set (180 compounds)** comes from ChEMBL alone. Every record
+  carries assay metadata -- organism, assay format, target confidence -- which is
+  what makes it possible to separate enzymatic from cellular measurements. All
+  model training and evaluation uses this set.
+- **The combined set** adds compounds found in PubChem but absent from ChEMBL.
+  It is used for ADMET profiling and the shortlist, where no assay metadata is
+  needed. Training on it was tried and made no measurable difference
+  (`docs/DATA_EXPANSION.md`), so the modelling set was kept as the basis for
+  reported model performance.
+
 See `docs/DATASET.md`. The one change that mattered most was separating
 cell-based from enzymatic assays before aggregating replicates: pooling them
 created 1-3 log 'disagreement' for 30 compounds that was really the
@@ -74,7 +89,7 @@ training set, so extrapolation is visible rather than implied.
 
 ## Candidate compounds
 
-- Profiled: **180**
+- Profiled: **185**
 - Meeting the combined CNS criteria: **22**
 - CNS-suitable **and** non-covalent: **6**
 - Inside the CNS property optimum (cLogP 1-4, TPSA 40-90 A2): **4**
