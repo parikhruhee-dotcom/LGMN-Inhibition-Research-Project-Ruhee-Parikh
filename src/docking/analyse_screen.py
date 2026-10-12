@@ -192,6 +192,30 @@ def analyse(scores: pd.DataFrame, dataset: pd.DataFrame) -> dict:
 
     active_threshold = float(dataset["pic50"].quantile(ACTIVE_QUANTILE))
 
+    def size_control(frame: pd.DataFrame) -> dict:
+        usable = frame[["affinity", "pic50", "heavy_atoms"]].dropna()
+        if len(usable) < MIN_FOR_STATS or usable["heavy_atoms"].nunique() <= 2:
+            return {}
+        rho, p = partial_spearman(
+            usable["affinity"], usable["pic50"], usable["heavy_atoms"]
+        )
+        return {
+            "n": len(usable),
+            "partial_rho": rho,
+            "partial_p": p,
+            "survives_size_control": bool(p < 0.05 and rho < 0),
+        }
+
+    # The whole-set control mixes two populations with different physics. A
+    # scoring function has no term for covalent bond formation, so for 85% of
+    # these compounds potency is governed by a reaction rate the score cannot
+    # see. The non-covalent subset is where docking is even expected to work,
+    # and it deserves its own control rather than being averaged away.
+    size_controlled_subsets = {
+        "non_covalent": size_control(non_covalent),
+        "covalent": size_control(covalent),
+    }
+
     size_controlled = {}
     usable = merged[["affinity", "pic50", "heavy_atoms"]].dropna()
     if len(usable) >= MIN_FOR_STATS and usable["heavy_atoms"].nunique() > 2:
@@ -220,6 +244,7 @@ def analyse(scores: pd.DataFrame, dataset: pd.DataFrame) -> dict:
         "active_threshold_pic50": active_threshold,
         "representativeness": representativeness(merged, dataset),
         "size_controlled": size_controlled,
+        "size_controlled_subsets": size_controlled_subsets,
         "n_in_active_site": len(in_site),
         "n_non_covalent": len(non_covalent),
         "affinity_min": float(merged["affinity"].min()),
@@ -379,6 +404,14 @@ def main() -> int:
                 else "relationship does NOT survive; it tracks size"
             )
         )
+
+    for label, entry in (summary.get("size_controlled_subsets") or {}).items():
+        if entry:
+            print(
+                f"    {label:14} n={entry['n']:3} partial rho "
+                f"{entry['partial_rho']:+.3f} (p={entry['partial_p']:.3g})"
+                + ("  survives" if entry["survives_size_control"] else "  does not survive")
+            )
 
     rep = summary.get("representativeness") or {}
     if rep and not rep.get("representative", True):

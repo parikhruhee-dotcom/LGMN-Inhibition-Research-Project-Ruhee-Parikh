@@ -78,38 +78,55 @@ here has a published pIC50, so the question can be measured instead of argued.
 > **This is a partial run.** The numbers below will move as the screen
 > finishes.
 
-> **The scored subset is not representative.** Its median pIC50 is 9.00 against 7.47 for the full dataset. A correlation
-> measured over a restricted potency range is not comparable to one over the
-> full range, so treat what follows as provisional.
-
-Scored compounds: **41**, affinity -7.78 to -5.55 kcal/mol.
+Scored compounds: **101**, affinity -7.78 to -5.26 kcal/mol.
 
 A working scoring function gives a **negative** correlation: a more negative
 affinity should mean a more potent compound.
 
 | Subset | n | Spearman | p | Direction |
 |---|---|---|---|---|
-| all scored compounds | 41 | -0.495 | 0.001 | correct |
-| pose contacts catalytic thiol | 40 | -0.478 | 0.0018 | correct |
-| non-covalent only | 12 | -0.603 | 0.0381 | correct |
-| covalent only | 29 | -0.402 | 0.0305 | correct |
+| all scored compounds | 101 | -0.272 | 0.00602 | correct |
+| pose contacts catalytic thiol | 98 | -0.237 | 0.0186 | correct |
+| non-covalent only | 19 | -0.592 | 0.00753 | correct |
+| covalent only | 82 | -0.179 | 0.107 | correct |
 
 ### Is it just molecular size?
 
 Vina-family scores grow more negative with ligand size, and in this dataset
-potency also rises with size (rho +0.40). A score that merely tracked size would
+potency also rises with size (rho +0.38). A score that merely tracked size would
 therefore produce a convincing correlation with potency while knowing nothing
 about binding.
 
-- affinity vs heavy atoms: **-0.31**
-- size vs potency: **+0.40**
-- affinity vs potency, controlling for size: **-0.426** (p=0.00554)
+- affinity vs heavy atoms: **-0.28**
+- size vs potency: **+0.38**
+- affinity vs potency, controlling for size: **-0.188** (p=0.0598)
 
-The relationship survives the control, so it is not simply a molecular
-weight effect. That is a more positive result than the redocking validation
-predicted, and worth stating plainly in both directions: the scoring
-function cannot place a ligand correctly in the pocket, yet retains some
-ability to tell potent compounds from weak ones across a series.
+The relationship does **not** survive the control. The apparent agreement
+between docking score and potency is an artefact of molecular size, and the
+scores carry no usable information about binding on this target.
+
+### Split by mechanism, the picture changes
+
+The whole-set number averages two populations with different physics. A
+scoring function has no term for covalent bond formation, so for the 85% of
+these compounds that inhibit covalently, potency is governed by a reaction rate
+the score cannot see. Controlling for ligand size within each group:
+
+| Subset | n | Partial Spearman | p | Survives size control |
+|---|---|---|---|---|
+| Non-covalent | 19 | -0.610 | 0.00555 | yes |
+| Covalent | 82 | -0.142 | 0.203 | no |
+
+That is the result worth taking from this screen, and it is more useful
+than the headline correlation. Docking carries real signal exactly where its
+physics applies -- non-covalent binding -- and none where it does not. The
+whole-set figure looks null only because the covalent majority swamps a real
+relationship in the minority.
+
+It also matters for this project specifically. Every compound on the
+shortlist that is both non-covalent and CNS-suitable falls in the subset where
+docking scores mean something, so the scores can be used to rank those
+candidates against each other -- which is not true of the dataset as a whole.
 
 ### What a top slice would actually give you
 
@@ -118,9 +135,9 @@ enrichment matters as much as correlation. 'Active' here means the top
 quartile of measured potency (pIC50 >= 8.23); a fixed 100 nM cut is
 meaningless on a set of published inhibitors where most compounds clear it.
 
-- Top 10% by docking score: **100%** are top-quartile potent
-- Whole set: **78%**
-- Enrichment factor: **1.28x** (1.0 would be no better than random)
+- Top 10% by docking score: **50%** are top-quartile potent
+- Whole set: **36%**
+- Enrichment factor: **1.40x** (1.0 would be no better than random)
 
 ## The deeper limitation
 

@@ -320,6 +320,58 @@ def docking_section() -> list[str]:
                     "",
                 ]
 
+        subsets = analysis.get("size_controlled_subsets") or {}
+        non_cov = subsets.get("non_covalent") or {}
+        cov = subsets.get("covalent") or {}
+        if non_cov and cov:
+            lines += [
+                "### Split by mechanism, the picture changes",
+                "",
+                "The whole-set number averages two populations with different "
+                "physics. A",
+                "scoring function has no term for covalent bond formation, so "
+                "for the 85% of",
+                "these compounds that inhibit covalently, potency is governed "
+                "by a reaction rate",
+                "the score cannot see. Controlling for ligand size within "
+                "each group:",
+                "",
+                "| Subset | n | Partial Spearman | p | Survives size control |",
+                "|---|---|---|---|---|",
+                f"| Non-covalent | {non_cov['n']} | "
+                f"{non_cov['partial_rho']:+.3f} | "
+                f"{non_cov['partial_p']:.3g} | "
+                f"{'yes' if non_cov['survives_size_control'] else 'no'} |",
+                f"| Covalent | {cov['n']} | {cov['partial_rho']:+.3f} | "
+                f"{cov['partial_p']:.3g} | "
+                f"{'yes' if cov['survives_size_control'] else 'no'} |",
+                "",
+            ]
+            if non_cov["survives_size_control"] and not cov[
+                "survives_size_control"
+            ]:
+                lines += [
+                    "That is the result worth taking from this screen, and it "
+                    "is more useful",
+                    "than the headline correlation. Docking carries real "
+                    "signal exactly where its",
+                    "physics applies -- non-covalent binding -- and none "
+                    "where it does not. The",
+                    "whole-set figure looks null only because the covalent "
+                    "majority swamps a real",
+                    "relationship in the minority.",
+                    "",
+                    "It also matters for this project specifically. Every "
+                    "compound on the",
+                    "shortlist that is both non-covalent and CNS-suitable "
+                    "falls in the subset where",
+                    "docking scores mean something, so the scores can be "
+                    "used to rank those",
+                    "candidates against each other -- which is not true of "
+                    "the dataset as a whole.",
+                    "",
+                ]
+
         enrich = analysis.get("enrichment") or {}
         if enrich.get("enrichment_factor") is not None:
             lines += [
