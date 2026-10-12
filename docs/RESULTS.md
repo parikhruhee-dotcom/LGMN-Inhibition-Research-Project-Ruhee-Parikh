@@ -26,6 +26,23 @@ created 1-3 log 'disagreement' for 30 compounds that was really the
 difference between inhibiting purified enzyme and inhibiting it inside a
 cell. Fixing it cut unusable labels from 31 compounds to 1.
 
+## What happens when these compounds meet a membrane
+
+35 compounds were measured both on purified enzyme and inside
+HEK293-A cells, which is the closest thing to experimental permeability
+evidence available here without running an experiment.
+
+- Median potency lost on entering a cell: **1.53 log units** (34-fold weaker)
+- Losing 10-fold or more: **30 of 35**
+- Molecular weight predicts the loss (Spearman 0.73, Holm-adjusted p=4e-6)
+
+This is the central finding meeting independent evidence. The compounds are
+large and polar because that is what binds an asparagine-recognising protease,
+and the same properties cost them most of their potency at an ordinary cell
+membrane. The blood-brain barrier is a considerably harder one.
+
+See `docs/PERMEABILITY.md`.
+
 ## Can potency be predicted?
 
 Modestly, for ranking. Not at all, for absolute potency on new chemistry.

@@ -280,6 +280,38 @@ def results_section() -> list[str]:
     else:
         lines += [MISSING, ""]
 
+    permeability = _read_csv(PROCESSED / "permeability_gap.csv")
+    if permeability is not None and not permeability.empty:
+        median_gap = permeability["cell_gap"].median()
+        large = int((permeability["cell_gap"] >= 1.0).sum())
+        lines += [
+            "## What happens when these compounds meet a membrane",
+            "",
+            f"{len(permeability)} compounds were measured both on purified "
+            "enzyme and inside",
+            "HEK293-A cells, which is the closest thing to experimental "
+            "permeability",
+            "evidence available here without running an experiment.",
+            "",
+            f"- Median potency lost on entering a cell: "
+            f"**{median_gap:.2f} log units** "
+            f"({10 ** median_gap:.0f}-fold weaker)",
+            f"- Losing 10-fold or more: **{large} of {len(permeability)}**",
+            "- Molecular weight predicts the loss "
+            "(Spearman 0.73, Holm-adjusted p=4e-6)",
+            "",
+            "This is the central finding meeting independent evidence. The "
+            "compounds are",
+            "large and polar because that is what binds an "
+            "asparagine-recognising protease,",
+            "and the same properties cost them most of their potency at an "
+            "ordinary cell",
+            "membrane. The blood-brain barrier is a considerably harder one.",
+            "",
+            "See `docs/PERMEABILITY.md`.",
+            "",
+        ]
+
     lines += ["## Can potency be predicted?", ""]
     if summary is not None:
         scaffold = summary[summary["split"] == "scaffold"].sort_values("mae_mean")

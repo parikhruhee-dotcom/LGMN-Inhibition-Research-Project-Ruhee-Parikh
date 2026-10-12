@@ -35,6 +35,7 @@ data:
 	$(PY) src/data/fetch_chembl.py
 	$(PY) src/data/prepare_dataset.py
 	$(PY) src/data/explore.py
+	$(PY) src/data/permeability.py
 
 target:
 	$(PY) src/docking/characterize_target.py

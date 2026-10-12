@@ -39,6 +39,7 @@ Full write-up in [docs/RESULTS.md](docs/RESULTS.md).
 | [docs/RESULTS.md](docs/RESULTS.md) | Findings, limitations, what would move this forward |
 | [docs/TARGET.md](docs/TARGET.md) | Structure survey, dyad geometry, template choice |
 | [docs/DATASET.md](docs/DATASET.md) | What the data can and cannot support |
+| [docs/PERMEABILITY.md](docs/PERMEABILITY.md) | Enzyme-to-cell potency loss, the permeability evidence |
 | [docs/DOCKING.md](docs/DOCKING.md) | Redocking validation and what it licenses |
 | [docs/SHORTLIST.md](docs/SHORTLIST.md) | Ranked candidate table |
 | [docs/PLAN.md](docs/PLAN.md) | Pipeline design |
