@@ -21,7 +21,9 @@ it targets the tau and amyloid pathways at once rather than either alone.
 | Carrying a covalent warhead | **153 (85%)** |
 | Best QSAR model, scaffold split | MAE **0.772** log units (mean baseline 1.030) |
 | Same model, R² | **−0.19** — ranks compounds, cannot predict absolute potency |
-| Compounds both CNS-suitable **and** non-covalent | **6** |
+| Compounds both CNS-suitable **and** non-covalent | **6** — but one series, not six leads |
+| Median potency lost entering a cell (n=35, paired) | **1.53 log units, 34-fold** |
+| Compounds with any published counter-screen | **4 of 180** |
 
 **The headline result is a negative one.** Only 6 of 180 published compounds are both
 predicted to reach the brain and free of a covalent warhead. Legumain inhibitor
@@ -29,6 +31,21 @@ chemistry is overwhelmingly covalent, peptide-like and polar — close to the op
 the profile that crosses the blood-brain barrier. For a CNS indication those two
 requirements pull against each other, and almost nothing in the published chemistry
 satisfies both.
+
+Three things sharpen that conclusion rather than soften it:
+
+- **Independent experimental support.** 35 compounds were measured on both purified
+  enzyme and inside cells. They lose a median 34-fold potency crossing an ordinary cell
+  membrane, and molecular weight predicts the loss (ρ=0.73, Holm p=4×10⁻⁶). The
+  blood-brain barrier is a much harder membrane than that one.
+- **The 6 survivors are a single chemical series**, not six independent leads — their
+  common core covers 82% of the median compound. All six carry an
+  ortho-phenylenediamine, a genotoxicity alert, and they are 742-fold weaker than the
+  best covalent inhibitor. One of them *is* the fragment bound in the 5LUA crystal
+  structure, which at least gives the series a solved binding mode.
+- **Selectivity is untested for 176 of 180 compounds.** Where it was tested it looks
+  good, but 12 of 14 data points are lower bounds ("no inhibition at 50 µM"), not
+  measurements. An untested compound is not a selective one.
 
 Full write-up in [docs/RESULTS.md](docs/RESULTS.md).
 
