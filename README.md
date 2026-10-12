@@ -136,7 +136,7 @@ make env          # or the two commands below
 ## Running
 
 ```bash
-make test       # 246 tests, no network required
+make test       # 253 tests, no network required
 make data       # fetch ChEMBL, build the modelling set, plot it
 make target     # survey structures, pick and prepare a docking template
 make model      # train and evaluate QSAR models
@@ -157,7 +157,7 @@ rather than quoting a stale number.
 | `src/models/` | Featurisation, applicability domain, QSAR training |
 | `src/docking/` | Structure survey, receptor prep, protocol validation, docking |
 | `src/admet/` | Drug-likeness, CNS and structural-alert filters |
-| `tests/` | 246 tests, including crystallographic ground truth for warheads |
+| `tests/` | 253 tests, including crystallographic ground truth for warheads |
 | `data/raw/` | Downloads, never hand-edited (gitignored) |
 | `data/processed/` | Built by scripts (gitignored) |
 | `results/` | Figures, metrics, models, docking output |
