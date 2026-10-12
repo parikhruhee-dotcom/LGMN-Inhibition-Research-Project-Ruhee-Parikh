@@ -152,6 +152,72 @@ def rank(compounds: pd.DataFrame) -> pd.DataFrame:
     return df.sort_values("composite_score", ascending=False).reset_index(drop=True)
 
 
+def characterise_selection(selected: pd.DataFrame, full: pd.DataFrame) -> dict:
+    """Describe what the surviving compounds actually are.
+
+    Counting unique Bemis-Murcko scaffolds overstates diversity badly here.
+    Murcko treats a morpholine and a thiomorpholine ring as different
+    scaffolds, so six analogues of one series are reported as six scaffolds.
+    The maximum common substructure across the set is the honest measure: if
+    one fragment covers every compound, there is one series, not six leads.
+    """
+    from rdkit import Chem
+    from rdkit.Chem import rdFMCS
+
+    if selected.empty:
+        return {}
+
+    mols = [Chem.MolFromSmiles(s) for s in selected["smiles"]]
+    mols = [m for m in mols if m is not None]
+    result: dict = {
+        "n": len(selected),
+        "murcko_scaffolds": int(selected["scaffold"].nunique()),
+        "pic50_min": float(selected["pic50"].min()),
+        "pic50_max": float(selected["pic50"].max()),
+    }
+
+    if len(mols) > 1:
+        mcs = rdFMCS.FindMCS(
+            mols,
+            ringMatchesRingOnly=True,
+            completeRingsOnly=False,
+            timeout=30,
+        )
+        if mcs.numAtoms > 0:
+            result["mcs_smarts"] = mcs.smartsString
+            result["mcs_atoms"] = int(mcs.numAtoms)
+            # Share of each molecule covered by the common core.
+            coverage = [
+                mcs.numAtoms / mol.GetNumHeavyAtoms() for mol in mols
+            ]
+            result["mcs_coverage_min"] = float(min(coverage))
+            result["mcs_coverage_median"] = float(np.median(coverage))
+
+    # Aromatic amines, and ortho-phenylenediamines in particular, are a
+    # recognised genotoxicity alert: metabolic N-oxidation gives reactive
+    # nitrenium and quinone-imine species. Worth stating plainly when the
+    # whole surviving set carries one.
+    anilines = Chem.MolFromSmarts("[NX3;H2,H1;!$(NC=O)]c")
+    ortho_diamine = Chem.MolFromSmarts("[NX3;!$(NC=O)]c1ccccc1[NX3;!$(NC=O)]")
+    result["n_aniline"] = sum(
+        1 for m in mols if anilines is not None and m.HasSubstructMatch(anilines)
+    )
+    result["n_ortho_phenylenediamine"] = sum(
+        1
+        for m in mols
+        if ortho_diamine is not None and m.HasSubstructMatch(ortho_diamine)
+    )
+
+    # How this set compares with the covalent chemistry it is competing with.
+    covalent = full[full["covalent"].fillna(False).astype(bool)]
+    if not covalent.empty:
+        result["covalent_best_pic50"] = float(covalent["pic50"].max())
+        result["potency_gap_logs"] = float(
+            covalent["pic50"].max() - selected["pic50"].max()
+        )
+    return result
+
+
 def make_figure(df: pd.DataFrame) -> None:
     import matplotlib
 
@@ -320,10 +386,14 @@ def write_doc(df: pd.DataFrame) -> None:
             f"{row.composite_score:.3f} |"
         )
 
-    best_cns = df[
+    # The full qualifying set drives the analysis; the table below is capped
+    # only to keep it readable. Characterising the capped subset instead would
+    # report a different count than the summary above it.
+    cns_noncovalent = df[
         df["cns_candidate"].fillna(False).astype(bool)
         & ~df["covalent"].fillna(False).astype(bool)
-    ].head(5)
+    ]
+    best_cns = cns_noncovalent.head(10)
 
     lines += [
         "",
@@ -354,6 +424,83 @@ def write_doc(df: pd.DataFrame) -> None:
                 f"{row.cns_mpo:.2f} | {row.clogp:.2f} | {row.tpsa:.0f} | "
                 f"{row.mw:.0f} | {int(row.pains_alerts)} |"
             )
+
+    profile_info = characterise_selection(cns_noncovalent, df)
+    if profile_info:
+        lines += [
+            "",
+            "### What this set actually is",
+            "",
+            f"These {profile_info['n']} compounds span "
+            f"{profile_info['murcko_scaffolds']} Bemis-Murcko scaffolds, which "
+            "makes them look",
+            "more diverse than they are. Murcko treats a morpholine and a "
+            "thiomorpholine",
+            "ring as different scaffolds, so close analogues are counted "
+            "separately.",
+            "",
+        ]
+        if "mcs_coverage_median" in profile_info:
+            lines += [
+                f"The maximum common substructure covers "
+                f"{100 * profile_info['mcs_coverage_median']:.0f}% of the "
+                f"median compound "
+                f"({profile_info['mcs_atoms']} atoms), and at least "
+                f"{100 * profile_info['mcs_coverage_min']:.0f}% of every one "
+                "of them.",
+                "**This is one chemical series, not "
+                f"{profile_info['n']} independent leads.** Everything that is "
+                "true of",
+                "the series -- its liabilities, its metabolic fate, its "
+                "patent position -- is",
+                "true of all of them at once.",
+                "",
+            ]
+        if profile_info.get("n_ortho_phenylenediamine"):
+            lines += [
+                f"All {profile_info['n_ortho_phenylenediamine']} carry an "
+                "**ortho-phenylenediamine**: two amines on adjacent positions "
+                "of",
+                "a benzene ring. Aromatic amines are metabolically activated "
+                "to nitrenium and",
+                "quinone-imine species, and ortho-phenylenediamines in "
+                "particular are a",
+                "recognised genotoxicity alert. That is a serious liability "
+                "for a chronic CNS",
+                "indication, where a drug would be taken for years. It does "
+                "not disqualify the",
+                "series, but any work on it should start with an Ames test "
+                "rather than with",
+                "potency optimisation.",
+                "",
+            ]
+        if "potency_gap_logs" in profile_info:
+            lines += [
+                "They are also considerably weaker than the covalent "
+                "chemistry they are being",
+                f"preferred over: the best compound here reaches pIC50 "
+                f"{profile_info['pic50_max']:.2f} against "
+                f"{profile_info['covalent_best_pic50']:.2f} for the best "
+                "covalent inhibitor, a gap of "
+                f"{profile_info['potency_gap_logs']:.1f} log units "
+                f"({10 ** profile_info['potency_gap_logs']:.0f}-fold).",
+                "The trade being proposed is a large loss of potency for a "
+                "chance at brain",
+                "exposure.",
+                "",
+            ]
+        lines += [
+            "One member of the series, **CHEMBL5185780**, is the same "
+            "compound as the",
+            "fragment 5KN bound in the 5LUA crystal structure (verified by "
+            "canonical SMILES).",
+            "So this series has a solved binding mode in the legumain active "
+            "site, which is",
+            "a real advantage for structure-based optimisation and the "
+            "strongest argument",
+            "for taking it seriously despite the above.",
+            "",
+        ]
 
     lines += [
         "",

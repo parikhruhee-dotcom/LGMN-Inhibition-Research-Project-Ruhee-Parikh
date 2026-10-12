@@ -68,6 +68,38 @@ regardless of where they place on the composite score.
 | CHEMBL5194542 | 6.26 | 5.83 | 1.45 | 60 | 319 | 0 |
 | CHEMBL5185780 | 6.07 | 5.83 | 0.94 | 51 | 263 | 0 |
 | CHEMBL5175987 | 6.12 | 5.27 | 2.38 | 32 | 295 | 0 |
+| CHEMBL5208689 | 5.32 | 5.11 | 2.83 | 85 | 404 | 0 |
+
+### What this set actually is
+
+These 6 compounds span 6 Bemis-Murcko scaffolds, which makes them look
+more diverse than they are. Murcko treats a morpholine and a thiomorpholine
+ring as different scaffolds, so close analogues are counted separately.
+
+The maximum common substructure covers 82% of the median compound (17 atoms), and at least 59% of every one of them.
+**This is one chemical series, not 6 independent leads.** Everything that is true of
+the series -- its liabilities, its metabolic fate, its patent position -- is
+true of all of them at once.
+
+All 6 carry an **ortho-phenylenediamine**: two amines on adjacent positions of
+a benzene ring. Aromatic amines are metabolically activated to nitrenium and
+quinone-imine species, and ortho-phenylenediamines in particular are a
+recognised genotoxicity alert. That is a serious liability for a chronic CNS
+indication, where a drug would be taken for years. It does not disqualify the
+series, but any work on it should start with an Ames test rather than with
+potency optimisation.
+
+They are also considerably weaker than the covalent chemistry they are being
+preferred over: the best compound here reaches pIC50 7.05 against 9.92 for the best covalent inhibitor, a gap of 2.9 log units (742-fold).
+The trade being proposed is a large loss of potency for a chance at brain
+exposure.
+
+One member of the series, **CHEMBL5185780**, is the same compound as the
+fragment 5KN bound in the 5LUA crystal structure (verified by canonical SMILES).
+So this series has a solved binding mode in the legumain active site, which is
+a real advantage for structure-based optimisation and the strongest argument
+for taking it seriously despite the above.
+
 
 ## Caveats that change how this should be read
 

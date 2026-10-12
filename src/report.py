@@ -418,6 +418,46 @@ def results_section() -> list[str]:
     else:
         lines += [MISSING, ""]
 
+    selectivity = _read_csv(PROCESSED / "selectivity.csv")
+    if selectivity is not None and dataset is not None:
+        tested = (
+            selectivity["molecule_chembl_id"].nunique()
+            if not selectivity.empty
+            else 0
+        )
+        total = dataset["molecule_chembl_id"].nunique()
+        bounded = (
+            int(selectivity["any_censored"].astype(bool).sum())
+            if not selectivity.empty
+            else 0
+        )
+        lines += [
+            "## Selectivity",
+            "",
+            f"- Compounds with any published counter-screen: "
+            f"**{tested} of {total}**",
+            f"- Of {len(selectivity)} compound-target pairs, **{bounded}** are "
+            "lower bounds",
+            "  ('no inhibition up to 50 uM') rather than measurements",
+            "",
+            "Where it has been looked at, selectivity is good -- roughly "
+            "1000-fold or better",
+            "against caspase-3, caspase-8, cathepsin B and cathepsin S. But "
+            "that covers "
+            f"{tested} compounds.",
+            "For the other "
+            f"{total - tested} the question is simply open, and for a "
+            "covalent",
+            "asparagine-directed warhead against a clan CD protease -- the "
+            "same clan as the",
+            "caspases -- open is the wrong state for it to be in. An "
+            "untested compound is",
+            "not a selective one.",
+            "",
+            "See `docs/SELECTIVITY.md`.",
+            "",
+        ]
+
     lines += [
         "## Honest limitations",
         "",

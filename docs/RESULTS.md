@@ -93,6 +93,21 @@ each other, and almost nothing in the published chemistry satisfies both.
 
 See `docs/SHORTLIST.md` for the ranked table.
 
+## Selectivity
+
+- Compounds with any published counter-screen: **4 of 180**
+- Of 14 compound-target pairs, **12** are lower bounds
+  ('no inhibition up to 50 uM') rather than measurements
+
+Where it has been looked at, selectivity is good -- roughly 1000-fold or better
+against caspase-3, caspase-8, cathepsin B and cathepsin S. But that covers 4 compounds.
+For the other 176 the question is simply open, and for a covalent
+asparagine-directed warhead against a clan CD protease -- the same clan as the
+caspases -- open is the wrong state for it to be in. An untested compound is
+not a selective one.
+
+See `docs/SELECTIVITY.md`.
+
 ## Honest limitations
 
 - **No experimental validation.** Every number is a prediction or a literature
