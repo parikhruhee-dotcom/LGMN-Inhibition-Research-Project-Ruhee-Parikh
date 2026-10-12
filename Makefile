@@ -59,6 +59,7 @@ admet:
 report:
 	$(PY) src/report.py
 	$(PY) src/report_candidates.py
+	$(PY) src/summary_figure.py
 
 all: data target model docking admet report
 
@@ -77,3 +78,4 @@ finalize:
 	$(PY) src/models/compare_datasets.py
 	$(PY) src/report.py
 	$(PY) src/report_candidates.py
+	$(PY) src/summary_figure.py
