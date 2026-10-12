@@ -5,8 +5,14 @@ keeps the sources separate rather than fusing them into one opaque score:
 
 - measured or predicted potency (pIC50)
 - whether the compound is predicted to reach the brain (CNS criteria)
-- whether its docking pose engages the catalytic site, where available
-- whether it carries a covalent warhead, reported rather than used to rank
+- its docking score, but only for non-covalent compounds with an active-site
+  pose, since that is the only subset where the screen found docking score to
+  track potency once ligand size was controlled for
+
+Covalent chemistry is reported, never used to penalise a compound directly.
+It does decide one thing: whether the docking term applies at all, because a
+scoring function with no term for bond formation cannot say anything useful
+about a compound whose potency is set by a reaction rate.
 
 Compounds are not silently dropped. Every exclusion is recorded with its
 reason, because for a cysteine protease the usual filters remove exactly the
@@ -19,7 +25,7 @@ Writes:
     docs/SHORTLIST.md           the ranked table with reasoning
 
 Usage:
-    python src/admet/screen.py
+    python src/admet/screen.py [--data data/processed/lgmn_combined.csv]
 """
 
 from __future__ import annotations

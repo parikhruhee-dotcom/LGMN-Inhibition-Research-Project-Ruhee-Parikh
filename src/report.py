@@ -133,17 +133,17 @@ def docking_section() -> list[str]:
             "then ranks a",
             "decoy above it.",
             "",
-            "The consequence is concrete and limiting. Docking scores from "
-            "this protocol",
-            "cannot be used to rank compounds against each other, because the "
-            "same",
-            "scoring function that misranks poses of one ligand will misrank "
-            "ligands.",
-            "They are used here only as a weak filter -- does the compound "
-            "fit the",
-            "pocket at all, and does its pose contact the catalytic thiol -- "
-            "and weighted",
-            "accordingly (0.15) in the shortlist.",
+            "The obvious inference is that these scores cannot rank "
+            "compounds either: the",
+            "same function that misranks poses of one ligand should misrank "
+            "ligands. That",
+            "inference is testable, because every compound here has a "
+            "published potency, and",
+            "the section below tests it rather than assuming it. The answer "
+            "turns out to",
+            "depend on mechanism, so the inference is right for most of the "
+            "dataset and",
+            "wrong for the part that matters most to this project.",
             "",
         ]
     else:
