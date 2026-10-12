@@ -8,9 +8,13 @@ seaborn
 # Cheminformatics
 rdkit
 
+# Structural biology (mmCIF/PDB parsing for the docking pipeline)
+biopython
+
 # Machine learning
 scikit-learn
 xgboost
+joblib
 
 # Data sources (ChEMBL / UniProt / PDB APIs)
 chembl-webresource-client
@@ -19,5 +23,10 @@ requests
 # Notebooks
 jupyterlab
 ipykernel
-ruff
+
+# Development
 pytest
+ruff
+
+# Not installable with pip: smina and Open Babel come from conda-forge.
+#   conda install -p ./.conda-env -c conda-forge smina openbabel
