@@ -253,7 +253,17 @@ def make_figure(selectivity: pd.DataFrame, lgmn: pd.DataFrame) -> None:
         axes[2].axhline(SELECTIVITY_CONCERN, ls=":", color="#e63946", lw=1.2)
         axes[2].set_xlabel("pIC50 against legumain")
         axes[2].set_ylabel("Selectivity (log units)")
-        axes[2].set_title("Does potency buy selectivity?")
+        n_cmpd = selectivity["molecule_chembl_id"].nunique()
+        # With a handful of compounds the question in the obvious title
+        # cannot be answered, and a plot that poses one invites the reader to
+        # answer it from four points.
+        if n_cmpd < 15:
+            axes[2].set_title(
+                f"Selectivity vs potency\n"
+                f"({n_cmpd} compounds -- too few to read a trend)"
+            )
+        else:
+            axes[2].set_title("Does potency buy selectivity?")
 
     for axis in axes:
         axis.spines[["top", "right"]].set_visible(False)
