@@ -1,4 +1,4 @@
-# LGMN Inhibition — Project Plan
+# LGMN Inhibition — Project Plan and Status
 
 ## Goal
 Identify candidate small-molecule inhibitors of **legumain (LGMN)** as a computational
@@ -12,80 +12,97 @@ amyloidogenic processing. Inhibiting it is therefore a dual-pathway hypothesis r
 than a single-pathway one.
 
 - UniProt: **Q99538** (human LGMN)
-- Candidate structures to evaluate: see `docs/TARGET.md` (to be filled in)
+- Catalytic dyad, measured in all 18 structures: **Cys189 / His148**
 
-## Pipeline
+## Pipeline status
 
-### Stage 1 — Target characterisation
-- [ ] Pull the UniProt record and sequence
-- [ ] Survey available PDB structures; pick a docking template on resolution,
-      completeness of the active site, and activation state (legumain is a zymogen that
-      self-activates at low pH — the mature form is what matters)
-- [ ] Identify the catalytic dyad (Cys189 / His148) and define the binding site box
+### Stage 1 — Target characterisation — **done**
+- [x] Survey every experimental structure (18 entries)
+- [x] Locate the catalytic dyad geometrically rather than by published numbering
+- [x] Distinguish mature enzyme from prolegumain
+- [x] Choose a docking template on measured evidence
 
-### Stage 2 — Dataset assembly
-- [ ] Query ChEMBL for compounds with activity against LGMN
-- [ ] Standardise structures (salt stripping, neutralisation, canonical tautomers)
-- [ ] Convert IC50/Ki to pIC50; resolve duplicate measurements
-- [ ] Decide the actives/inactives threshold and document the choice
-- [ ] **Check the class balance before modelling.** LGMN has far less public bioactivity
-      data than a kinase; if there are only tens of compounds, a classifier is not
-      defensible and the project should lean on docking plus similarity search instead.
+Written up in [TARGET.md](TARGET.md). The finding that changed the implementation:
+dyad S···N distance spans 4.1–7.9 Å across activation and ligand states, so it cannot
+be used to identify the site. Identification rests on nearest-pair identity plus
+agreement across independent structures.
 
-### Stage 3 — Machine learning (conditional on Stage 2 data volume)
-- [ ] Descriptors + fingerprints (Morgan/ECFP4, RDKit physicochemical)
-- [ ] Scaffold-based train/test split, not random — random splits inflate scores
-- [ ] Baseline (logistic regression) before anything fancier
-- [ ] Random forest / XGBoost with cross-validated hyperparameters
-- [ ] Report ROC-AUC, PR-AUC, MCC; PR-AUC matters more under class imbalance
-- [ ] Applicability domain: flag predictions outside the training chemical space
+### Stage 2 — Dataset assembly — **done**
+- [x] Query ChEMBL via the UniProt accession
+- [x] Standardise structures (salt stripping, neutralisation, canonical form)
+- [x] Convert to pIC50; aggregate replicates by median
+- [x] Separate assay classes before aggregating
+- [x] Flag covalent warheads, validated against crystallographic ground truth
+- [x] Check class balance before modelling
 
-### Stage 4 — Virtual screening and docking
-- [ ] Assemble a screening library (ChEMBL/ZINC/DrugBank subset)
-- [ ] Prepare receptor and ligands
-- [ ] Dock with AutoDock Vina or smina
-- [ ] Re-dock a known ligand first to validate the setup (redocking RMSD < 2 Å)
-- [ ] Rank hits, inspect poses for real contacts with the catalytic site
+**180 compounds, 55 scaffolds, 85% covalent.** Written up in [DATASET.md](DATASET.md).
 
-### Stage 5 — ADMET
-- [ ] Lipinski / Veber filters
-- [ ] **Blood–brain barrier permeability is the make-or-break filter here** — a CNS
-      target means most otherwise-good hits will fail
-- [ ] Toxicity alerts (PAINS, structural alerts)
-- [ ] Shortlist with per-compound rationale
+The planned actives/inactives classifier was **abandoned on the evidence**. With 180
+compounds over 55 scaffolds, 42 of them singletons, a scaffold-split test fold holds
+~36 compounds and a couple of errors move the AUC by a lot. A regression on pIC50 with
+honest error bars says more and claims less.
 
-### Stage 6 — Write-up
-- [ ] Figures, methods, limitations
-- [ ] Be explicit that this is computational prediction, not validation
+### Stage 3 — Machine learning — **done, with a negative result**
+- [x] Morgan fingerprints and physicochemical descriptors, evaluated separately
+- [x] Scaffold-grouped splits, with random splits reported alongside for contrast
+- [x] Baselines: training mean and Tanimoto 1-NN
+- [x] Nested cross-validation for hyperparameters
+- [x] Applicability domain on every prediction
 
-## Honest limitations to state up front
+Best scaffold-split model: random forest, **MAE 0.772** vs mean-baseline 1.030, but
+**R² = −0.19** and Spearman 0.47. It ranks compounds with modest skill and cannot
+predict absolute potency on new chemistry. See [RESULTS.md](RESULTS.md).
+
+### Stage 4 — Docking — **done, protocol does not validate**
+- [x] Prepare receptor from the chosen template
+- [x] **Redock a known ligand to validate the setup** — done for all five candidates
+- [x] Screen the dataset and measure score-vs-potency directly
+
+No template reproduced its crystal pose as the top-ranked result, though sampling found
+it in four of five. The scoring function cannot rank poses for this target, so it cannot
+rank compounds either. Docking is weighted 0.15 and used only as a pocket-fit filter.
+See [DOCKING.md](DOCKING.md).
+
+### Stage 5 — ADMET — **done**
+- [x] Lipinski and Veber filters
+- [x] CNS MPO as a primary criterion, not an afterthought
+- [x] PAINS and Brenk alerts, reported rather than used to reject
+- [x] Shortlist with per-compound reasoning
+
+**Only 6 of 180 compounds are both CNS-suitable and non-covalent.** See
+[SHORTLIST.md](SHORTLIST.md).
+
+### Stage 6 — Write-up — **done**
+- [x] Figures (dataset overview, model performance, ADMET cascade)
+- [x] Methods and limitations, generated from artefacts on disk
+- [x] Explicit statement that this is prediction, not validation
+
+## Limitations, stated up front
 - No wet-lab confirmation; every result is a hypothesis.
-- Docking scores correlate weakly with real binding affinity.
+- Docking scores correlate weakly with real binding affinity — and here the protocol
+  did not even pass its own redocking test.
 - ADMET predictors are trained on drug-like chemical space and extrapolate poorly.
-- Legumain is a cysteine protease, so covalent inhibitors are plausible, and standard
-  non-covalent docking scores them badly. Note which hits are covalent warheads.
+- Legumain is a cysteine protease, so most known inhibitors are covalent, and standard
+  non-covalent docking cannot score them meaningfully.
+- Selectivity was not assessed. Legumain is clan CD alongside the caspases.
+
+## What would move this forward
+1. Test the 6 non-covalent CNS-suitable compounds against recombinant legumain.
+2. Measure selectivity against caspase-3 and cathepsin B for anything active.
+3. Analyse the enzymatic-to-cellular potency gap in the 74 separated cell-based records.
+4. Expand beyond ChEMBL; 180 compounds is the ceiling on what any model here can learn.
 
 ## Environment
-Python 3.12 virtualenv at `.venv` (RDKit does not reliably build on the image's
-default 3.14).
+Python 3.12 conda environment at `.conda-env` (RDKit has no wheel for the image's
+default 3.14, and `python3.12-venv` is unavailable).
 
 ```bash
-source .venv/bin/activate
-```
-
-## Layout
-```
-data/raw/         # downloaded, never edited by hand
-data/processed/   # cleaned datasets produced by scripts in src/data
-src/data/         # acquisition + cleaning
-src/models/       # ML
-src/docking/      # receptor/ligand prep, docking runs
-src/admet/        # filters
-results/          # figures, trained models, docking output
-notebooks/        # exploration only; anything load-bearing moves into src/
-docs/             # plan, target notes, write-up
+make env
+make test
+make all
 ```
 
 ## Working rule
-Commit at the end of every session. Uncommitted work in a Codespace does not survive a
-container rebuild — this project already lost a day's setup that way.
+Commit **and push** at the end of every session. A Codespace rebuild re-clones from
+GitHub, so a local-only commit is not safe either — this project already lost a day's
+setup that way.

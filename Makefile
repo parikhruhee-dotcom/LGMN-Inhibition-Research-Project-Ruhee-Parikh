@@ -58,3 +58,6 @@ all: data target model docking admet report
 clean:
 	rm -rf results/docking/poses results/models/*.joblib
 	@echo "Kept data/ and the CSV outputs; removed poses and fitted models."
+
+predict:
+	$(PY) src/models/predict.py --input $(IN) --output $(OUT)
