@@ -34,6 +34,8 @@ either alone ([Wu 2019](https://doi.org/10.1016/j.pneurobio.2019.101730),
 | Median potency lost entering a cell (n=35, paired) | **1.53 log units, 34-fold** |
 | Compounds with any published counter-screen | **4 of 180** |
 | Compounds gained by searching PubChem too | **+5** — and no measurable model gain |
+| Compounds docked | **180 of 180**, no failures, 172 poses in the active site |
+| Docking score vs measured potency | **ρ = -0.50** non-covalent, **-0.22** covalent (size-controlled) |
 
 **The headline result is a negative one.** Only 6 of 180 published compounds are both
 predicted to reach the brain and free of a covalent warhead. Legumain inhibitor
@@ -56,6 +58,12 @@ Three things sharpen that conclusion rather than soften it:
 - **Selectivity is untested for 176 of 180 compounds.** Where it was tested it looks
   good, but 12 of 14 data points are lower bounds ("no inhibition at 50 µM"), not
   measurements. An untested compound is not a selective one.
+- **Docking works, but weakly, and better where its physics applies.** All 180 compounds
+  were docked. After cancelling out the fact that bigger molecules score better simply
+  for being bigger, the link between score and real potency survives for both groups —
+  about twice as strong for non-covalent compounds (ρ = -0.50) as for covalent ones
+  (ρ = -0.22). An earlier reading from half the data said covalent compounds showed no
+  link at all; the full data overturned it ([docs/DOCKING.md](docs/DOCKING.md)).
 - **The data ceiling is real, not an artefact of using one database.** Searching
   PubChem as well added 5 compounds and 3 scaffolds, and retraining on them changed
   nothing measurable (p = 0.98). An earlier version of that comparison appeared to show
@@ -76,6 +84,7 @@ Full write-up in [docs/RESULTS.md](docs/RESULTS.md).
 | [docs/SELECTIVITY.md](docs/SELECTIVITY.md) | Counter-screens against caspases and cathepsins |
 | [docs/DOCKING.md](docs/DOCKING.md) | Redocking validation and what it licenses |
 | [docs/SHORTLIST.md](docs/SHORTLIST.md) | Ranked candidate table |
+| [docs/CANDIDATES.md](docs/CANDIDATES.md) | Per-compound dossier: structures, poses, liabilities |
 | [docs/REFERENCES.md](docs/REFERENCES.md) | The biological premise, and the case against it |
 | [docs/DATA_EXPANSION.md](docs/DATA_EXPANSION.md) | Whether more data helped (it did not, measurably) |
 | [docs/PLAN.md](docs/PLAN.md) | Pipeline design |
