@@ -116,10 +116,23 @@ def rank(compounds: pd.DataFrame) -> pd.DataFrame:
         (potency - potency.min()) / span if span > 0 else 0.5
     )
 
-    # Docking contributes only where a pose was obtained in the active site.
+    # Docking contributes only where a pose was obtained in the active site
+    # AND the compound binds non-covalently.
+    #
+    # The screen measured this directly: controlling for ligand size, docking
+    # score tracks potency within the non-covalent subset and not within the
+    # covalent one, because the scoring function has no term for bond
+    # formation and covalent potency is governed by a reaction rate it cannot
+    # see. Feeding covalent compounds' scores into the ranking adds noise
+    # dressed as evidence, so they are ranked on potency and ADMET alone.
     affinity = df.get("affinity")
     if affinity is not None and affinity.notna().any():
-        valid = affinity.notna() & df["in_active_site"].fillna(False).astype(bool)
+        non_covalent = ~df["covalent"].fillna(False).astype(bool)
+        valid = (
+            affinity.notna()
+            & df["in_active_site"].fillna(False).astype(bool)
+            & non_covalent
+        )
         worst, best = affinity[valid].max(), affinity[valid].min()
         docking_norm = pd.Series(np.nan, index=df.index, dtype=float)
         if pd.notna(worst) and pd.notna(best) and worst != best:
@@ -133,8 +146,10 @@ def rank(compounds: pd.DataFrame) -> pd.DataFrame:
 
     # Weights: potency and brain penetration matter most for a CNS target;
     # docking is a weak signal here and is weighted accordingly. Where a
-    # docking score is missing the remaining weights are renormalised rather
-    # than treating the absence as a zero.
+    # docking term is absent -- not screened, no active-site pose, or covalent
+    # -- the remaining weights are renormalised rather than treating the
+    # absence as a zero, so a compound is never penalised for lacking a
+    # measurement that would have been meaningless anyway.
     weights = {"potency_norm": 0.45, "cns_norm": 0.40, "docking_norm": 0.15}
     total = pd.Series(0.0, index=df.index)
     weight_sum = pd.Series(0.0, index=df.index)
@@ -382,9 +397,18 @@ def write_doc(df: pd.DataFrame) -> None:
         "see",
         "`docs/DOCKING.md` for the redocking validation that justifies "
         "distrusting it.",
-        "Where a compound has no docking result the remaining weights are "
-        "renormalised",
-        "rather than scoring the absence as zero.",
+        "",
+        "**Docking contributes only for non-covalent compounds.** The screen "
+        "measured that,",
+        "controlling for ligand size, docking score tracks potency within the "
+        "non-covalent",
+        "subset and not within the covalent one -- the scoring function has "
+        "no term for",
+        "bond formation. Feeding covalent compounds' scores into the ranking "
+        "would add noise",
+        "dressed as evidence. Where the docking term is absent for any "
+        "reason, the remaining",
+        "weights are renormalised rather than scoring the absence as zero.",
         "",
         f"## Top {len(top)} compounds by composite score",
         "",

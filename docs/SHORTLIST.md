@@ -27,8 +27,13 @@ barrier.
 The composite score weights measured potency (0.45), predicted CNS exposure
 (0.40) and docking (0.15). Docking is weighted low deliberately -- see
 `docs/DOCKING.md` for the redocking validation that justifies distrusting it.
-Where a compound has no docking result the remaining weights are renormalised
-rather than scoring the absence as zero.
+
+**Docking contributes only for non-covalent compounds.** The screen measured that,
+controlling for ligand size, docking score tracks potency within the non-covalent
+subset and not within the covalent one -- the scoring function has no term for
+bond formation. Feeding covalent compounds' scores into the ranking would add noise
+dressed as evidence. Where the docking term is absent for any reason, the remaining
+weights are renormalised rather than scoring the absence as zero.
 
 ## Top 25 compounds by composite score
 

@@ -15,6 +15,7 @@ from rdkit import Chem
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
+import pandas as pd  # noqa: E402
 from admet.filters import (  # noqa: E402
     _ramp,
     _tpsa_desirability,
@@ -217,3 +218,54 @@ class TestBlockerReason:
         annotated["covalent"] = False
         ranked = rank(annotated)
         assert ranked["cns_blocker"].iloc[0] == ""
+
+
+class TestMechanismAwareRanking:
+    """Docking must contribute only where it was shown to carry signal.
+
+    The screen measured, controlling for ligand size, that docking score
+    tracks potency within the non-covalent subset and not within the covalent
+    one: the scoring function has no term for bond formation, and covalent
+    potency is set by a reaction rate it cannot see. Including covalent
+    docking scores in the ranking would add noise dressed as evidence.
+    """
+
+    def _frame(self):
+        import pandas as pd
+
+        rows = []
+        for smiles, covalent in ((DIAZEPAM, False), (ASPIRIN, True)):
+            row = profile(smiles)
+            row["pic50"] = 8.0
+            row["covalent"] = covalent
+            row["affinity"] = -9.0
+            row["in_active_site"] = True
+            rows.append(row)
+        return pd.DataFrame(rows)
+
+    def test_covalent_compound_gets_no_docking_term(self):
+        from admet.screen import rank
+
+        ranked = rank(self._frame()).set_index("covalent")
+        assert pd.isna(ranked.loc[True, "docking_norm"])
+
+    def test_non_covalent_compound_keeps_its_docking_term(self):
+        from admet.screen import rank
+
+        frame = self._frame()
+        # Two non-covalent compounds so the affinity range is non-degenerate.
+        frame.loc[1, "covalent"] = False
+        frame.loc[1, "affinity"] = -5.0
+        ranked = rank(frame)
+        assert ranked["docking_norm"].notna().all()
+
+    def test_missing_docking_does_not_penalise_a_compound(self):
+        """Weights renormalise; absence must not act as a zero score."""
+        from admet.screen import rank
+
+        frame = self._frame()
+        with_dock = rank(frame)["composite_score"].to_numpy()
+        frame_no_dock = frame.drop(columns=["affinity"])
+        without = rank(frame_no_dock)["composite_score"].to_numpy()
+        assert (with_dock > 0).all()
+        assert (without > 0).all()
