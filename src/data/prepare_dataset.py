@@ -49,6 +49,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from data.standardize import (  # noqa: E402
     basic_properties,
     find_warheads,
+    inchikey,
     is_covalent,
     standardize_mol,
 )
@@ -313,6 +314,25 @@ def main() -> int:
         final.groupby("scaffold").size().eq(1).sum()
     )
     print(f"  scaffolds seen only once:  {singleton_scaffolds}")
+
+    # Compounds are grouped by canonical SMILES, which does not collapse
+    # tautomers: one compound deposited in two tautomeric forms would become
+    # two rows with two different potencies. ChEMBL's own records are
+    # internally consistent so this does not currently fire, but it is a
+    # silent failure if it ever does, and the same confusion already caused a
+    # real error when merging PubChem.
+    keys = [inchikey(s) for s in final["smiles"]]
+    resolved = [k for k in keys if k]
+    duplicates = len(resolved) - len(set(resolved))
+    if duplicates:
+        print(
+            f"\n  WARNING: {duplicates} compounds share an InChIKey with "
+            "another row,\n  meaning the same molecule appears more than once "
+            "under different\n  tautomeric SMILES. Deduplicate before "
+            "modelling."
+        )
+    else:
+        print("  duplicate structures:      none (checked by InChIKey)")
 
     if not final.empty:
         top = final.head(5)[["molecule_chembl_id", "pic50", "covalent", "warheads"]]
