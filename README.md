@@ -4,8 +4,17 @@ Computational search for small-molecule inhibitors of **legumain (LGMN)** as an
 Alzheimer's disease target, using ligand-based machine learning, molecular docking and
 ADMET prediction.
 
-Legumain (asparaginyl endopeptidase) cleaves tau at N368 and APP at N585, so inhibiting
-it targets the tau and amyloid pathways at once rather than either alone.
+Legumain (asparaginyl endopeptidase, also called δ-secretase) cleaves tau at N368 and APP
+at N585, so inhibiting it targets the tau and amyloid pathways at once rather than
+either alone ([Wu 2019](https://doi.org/10.1016/j.pneurobio.2019.101730),
+[Liao 2021](https://doi.org/10.1016/j.neuropharm.2021.108737); via PubMed).
+
+> **The therapeutic premise is contested.** Behrendt *et al.* (2019) find that AEP
+> cleaves tau inside microglia as part of normal protein degradation, and explicitly
+> caution against blocking it as an Alzheimer's strategy
+> ([DOI](https://doi.org/10.1016/j.nbd.2019.104518)). That sits upstream of everything
+> in this repository: every method here assumes inhibition is desirable and only asks
+> which molecule does it best. See [docs/REFERENCES.md](docs/REFERENCES.md).
 
 > **Everything here is a computational prediction.** No compound has been tested
 > experimentally by this project. Potency values are literature measurements from
@@ -60,6 +69,7 @@ Full write-up in [docs/RESULTS.md](docs/RESULTS.md).
 | [docs/SELECTIVITY.md](docs/SELECTIVITY.md) | Counter-screens against caspases and cathepsins |
 | [docs/DOCKING.md](docs/DOCKING.md) | Redocking validation and what it licenses |
 | [docs/SHORTLIST.md](docs/SHORTLIST.md) | Ranked candidate table |
+| [docs/REFERENCES.md](docs/REFERENCES.md) | The biological premise, and the case against it |
 | [docs/PLAN.md](docs/PLAN.md) | Pipeline design |
 
 ## Three things that were nearly wrong

@@ -112,6 +112,11 @@ See `docs/SELECTIVITY.md`.
 
 ## Honest limitations
 
+- **The therapeutic premise itself is contested.** Behrendt et al. (2019) report
+  that AEP cleaves tau inside microglia as part of normal degradation and caution
+  against blocking it as an Alzheimer's strategy. Every method in this project
+  assumes inhibition is desirable and only asks which molecule does it best, so
+  none of them can detect this. See `docs/REFERENCES.md`.
 - **No experimental validation.** Every number is a prediction or a literature
   measurement. Nothing was tested.
 - **The dataset is small and concentrated.** 180 compounds over 55 scaffolds,
