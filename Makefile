@@ -2,7 +2,7 @@ PY := ./.conda-env/bin/python
 PIP := ./.conda-env/bin/pip
 CONDA := /opt/conda/bin/conda
 
-.PHONY: help env test lint data target docking model admet figures all clean
+.PHONY: help env test lint data target docking model admet figures all clean finalize predict report
 
 help:
 	@echo "LGMN inhibition pipeline"
@@ -67,3 +67,11 @@ clean:
 
 predict:
 	$(PY) src/models/predict.py --input $(IN) --output $(OUT)
+
+# Run after the docking screen completes: analyse the scores, fold them into
+# the shortlist, and regenerate every write-up from the new results.
+finalize:
+	$(PY) src/docking/analyse_screen.py
+	$(PY) src/admet/screen.py
+	$(PY) src/models/compare_datasets.py
+	$(PY) src/report.py
