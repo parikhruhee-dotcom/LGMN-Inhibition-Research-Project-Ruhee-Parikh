@@ -82,6 +82,29 @@ def candidate_templates() -> pd.DataFrame:
     return candidates.drop_duplicates(subset=["ligand"], keep="first")
 
 
+def parse_obrms(output: str) -> list[float]:
+    """Parse obrms output into one RMSD per docked pose.
+
+    obrms prints "<molecule name> <rmsd>" per line. The name can contain
+    spaces, so the value is taken from the right. Lines that do not end in a
+    number are skipped rather than raising, since obrms also emits warnings.
+
+    The command must be run with -f. Without it obrms pairs the two files
+    record by record and reports only the first pose, which made a successful
+    best-of-20 redocking look like a total failure and nearly led to the wrong
+    template being chosen.
+    """
+    rmsds = []
+    for line in output.splitlines():
+        parts = line.strip().rsplit(" ", 1)
+        if len(parts) == 2:
+            try:
+                rmsds.append(float(parts[1]))
+            except ValueError:
+                continue
+    return rmsds
+
+
 def redock(template: dict, exhaustiveness: int) -> dict:
     """Redock a template's own ligand and measure RMSD to the crystal pose."""
     directory = Path(template["directory"])
@@ -119,14 +142,7 @@ def redock(template: dict, exhaustiveness: int) -> dict:
         capture_output=True,
         text=True,
     )
-    rmsds = []
-    for line in rmsd_result.stdout.splitlines():
-        parts = line.strip().rsplit(" ", 1)
-        if len(parts) == 2:
-            try:
-                rmsds.append(float(parts[1]))
-            except ValueError:
-                continue
+    rmsds = parse_obrms(rmsd_result.stdout)
 
     affinities = []
     from rdkit import Chem

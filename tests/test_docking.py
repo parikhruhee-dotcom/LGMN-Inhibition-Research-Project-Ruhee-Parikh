@@ -214,3 +214,55 @@ class TestBoxGeometry:
     def test_centre_is_the_ligand_centroid(self):
         coords = np.array([[0.0, 0.0, 0.0], [4.0, 2.0, 6.0]])
         np.testing.assert_allclose(coords.mean(axis=0), [2.0, 1.0, 3.0])
+
+
+class TestObrmsParsing:
+    """Parsing the RMSD output that decides whether docking is trusted.
+
+    The measurement this feeds got a wrong answer once: obrms was run without
+    -f, so it paired the reference and docked files record by record and
+    reported only the first pose. A redocking that found the crystal pose at
+    1.44 A among its 20 poses looked like a 10.4 A total failure, and the
+    wrong template was nearly selected on the strength of it.
+    """
+
+    def test_parses_one_value_per_pose(self):
+        from docking.validate_protocol import parse_obrms
+
+        assert parse_obrms("pose1 2.137\npose2 3.429\npose3 1.445\n") == [
+            2.137,
+            3.429,
+            1.445,
+        ]
+
+    def test_handles_names_containing_spaces(self):
+        """The value is taken from the right because names can contain spaces."""
+        from docking.validate_protocol import parse_obrms
+
+        assert parse_obrms("my ligand name here 1.02\n") == [1.02]
+
+    def test_skips_lines_that_are_not_measurements(self):
+        from docking.validate_protocol import parse_obrms
+
+        result = parse_obrms(
+            "warning: something odd\npose1 2.5\n==============\n"
+        )
+        assert result == [2.5]
+
+    def test_empty_output_yields_no_values(self):
+        from docking.validate_protocol import parse_obrms
+
+        assert parse_obrms("") == []
+
+    def test_best_of_n_differs_from_top_pose(self):
+        """The distinction that separates a scoring failure from a broken setup.
+
+        Measured on 7FQH/WR9: the best pose was 1.02 A but ranked fifth, so
+        sampling worked and only the ranking failed.
+        """
+        from docking.validate_protocol import parse_obrms
+
+        rmsds = parse_obrms("p1 7.30\np2 4.1\np3 3.0\np4 2.2\np5 1.02\n")
+        assert rmsds[0] == pytest.approx(7.30)      # top-ranked pose
+        assert min(rmsds) == pytest.approx(1.02)    # best pose found
+        assert rmsds.index(min(rmsds)) + 1 == 5     # ranked fifth
