@@ -489,6 +489,22 @@ def _model_verdict() -> str:
     )
 
 
+def _docking_verdict() -> str:
+    """Summarise the measured score-versus-potency relationship."""
+    analysis = _read_json(RESULTS / "docking" / "screen_analysis.json")
+    if not analysis:
+        return "not evaluated"
+    subsets = analysis.get("size_controlled_subsets") or {}
+    non_cov = subsets.get("non_covalent") or {}
+    cov = subsets.get("covalent") or {}
+    if not non_cov or not cov:
+        return "not evaluated"
+    return (
+        f"Weakly, after controlling for size: rho {non_cov['partial_rho']:.2f} "
+        f"non-covalent, {cov['partial_rho']:.2f} covalent"
+    )
+
+
 def _permeability_verdict() -> str:
     stats = _read_json(PROCESSED / "permeability_stats.json")
     if not stats:
@@ -868,6 +884,8 @@ def results_section() -> list[str]:
         "redocking across all 5 candidates | `TARGET.md`, `DOCKING.md` |",
         "| Can the docking protocol reproduce a known pose? | No -- sampling "
         "finds it, scoring misranks it | `DOCKING.md` |",
+        "| Does the docking score predict potency anyway? | "
+        f"{_docking_verdict()} | `DOCKING.md` |",
         "| Can potency be predicted for new scaffolds? | "
         f"{_model_verdict()} | `RESULTS.md` |",
         "| Do these compounds reach the inside of a cell? | "
