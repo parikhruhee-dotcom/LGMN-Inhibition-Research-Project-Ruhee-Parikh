@@ -45,6 +45,8 @@ See `docs/PERMEABILITY.md`.
 
 ## Can potency be predicted?
 
+![Model performance](../results/figures/model_performance.png)
+
 Modestly, for ranking. Not at all, for absolute potency on new chemistry.
 
 | Split | Best model | MAE (log units) | R2 | Spearman |

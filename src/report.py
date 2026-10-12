@@ -312,7 +312,12 @@ def results_section() -> list[str]:
             "",
         ]
 
-    lines += ["## Can potency be predicted?", ""]
+    lines += [
+        "## Can potency be predicted?",
+        "",
+        "![Model performance](../results/figures/model_performance.png)",
+        "",
+    ]
     if summary is not None:
         scaffold = summary[summary["split"] == "scaffold"].sort_values("mae_mean")
         random_split = summary[summary["split"] == "random"].sort_values("mae_mean")
