@@ -187,7 +187,6 @@ def _docking_verdict(shortlist: pd.DataFrame) -> list[str]:
 
     context = json.loads(context_path.read_text())
     row = shortlist.iloc[0]
-    rank = int(shortlist["affinity"].iloc[0] > context["affinity_median"])
 
     return [
         "### It was docked, and the result settles nothing",

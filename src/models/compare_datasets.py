@@ -136,6 +136,14 @@ def write_doc(result: dict, n_before: int, n_after: int,
         "",
         "## Headline numbers, and why they mislead",
         "",
+        "Fold-by-fold performance on each dataset, the error bars being the "
+        "point:",
+        "",
+        "| Before | After |",
+        "|---|---|",
+        "| ![before](../results/figures/model_performance.png) | "
+        "![after](../results/figures/model_performance_combined.png) |",
+        "",
         "| | Best model | MAE | R2 | Spearman |",
         "|---|---|---|---|---|",
         f"| Before | {best_before['model']} ({best_before['features']}) | "

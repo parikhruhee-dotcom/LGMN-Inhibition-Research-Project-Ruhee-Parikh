@@ -61,7 +61,7 @@ report:
 	$(PY) src/report_candidates.py
 	$(PY) src/summary_figure.py
 
-all: data target model docking admet report
+all: data target model docking admet repurpose report
 
 clean:
 	rm -rf results/docking/poses results/models/*.joblib

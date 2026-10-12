@@ -7,6 +7,12 @@ PubChem compounds absent from it takes that to **185 over 58**.
 
 ## Headline numbers, and why they mislead
 
+Fold-by-fold performance on each dataset, the error bars being the point:
+
+| Before | After |
+|---|---|
+| ![before](../results/figures/model_performance.png) | ![after](../results/figures/model_performance_combined.png) |
+
 | | Best model | MAE | R2 | Spearman |
 |---|---|---|---|---|
 | Before | random_forest (both) | 0.772 | -0.195 | 0.472 |
