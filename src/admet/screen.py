@@ -145,16 +145,22 @@ def rank(compounds: pd.DataFrame) -> pd.DataFrame:
         weight_sum[present] += weight
     df["composite_score"] = np.where(weight_sum > 0, total / weight_sum, np.nan)
 
-    df["cns_blocker"] = np.where(
-        df["cns_candidate"].fillna(False).astype(bool),
-        "",
-        np.where(
-            ~df["cns_mpo_pass"].fillna(False).astype(bool),
-            f"CNS MPO {df['cns_mpo'].round(1).astype(str)} < 4",
-            f"only {df['bbb_rules_passed']}/{df['bbb_rules_total']} "
-            f"BBB rules (need {MIN_BBB_RULES})",
-        ),
-    )
+    # Built row by row rather than with np.where on f-strings. An f-string
+    # interpolating a Series renders the whole Series into one string, so
+    # every row received the same unreadable blob -- "CNS MPO 0 3.2 1 3.2 ...
+    # Length: 185, dtype: str < 4" -- instead of its own reason.
+    def blocker(row: pd.Series) -> str:
+        if bool(row.get("cns_candidate")):
+            return ""
+        if not bool(row.get("cns_mpo_pass")):
+            return f"CNS MPO {row['cns_mpo']:.1f} < 4.0"
+        return (
+            f"only {int(row['bbb_rules_passed'])}/"
+            f"{int(row['bbb_rules_total'])} BBB rules "
+            f"(need {MIN_BBB_RULES})"
+        )
+
+    df["cns_blocker"] = df.apply(blocker, axis=1)
 
     return df.sort_values("composite_score", ascending=False).reset_index(drop=True)
 

@@ -174,3 +174,46 @@ class TestProfile:
     def test_bbb_rule_tally_is_consistent(self):
         result = profile(DIAZEPAM)
         assert 0 <= result["bbb_rules_passed"] <= result["bbb_rules_total"]
+
+
+class TestBlockerReason:
+    """Each compound must get its own reason, not a rendered Series.
+
+    An f-string interpolating a pandas Series renders the entire Series into
+    one string, so every row received the same 171-character blob -- "CNS MPO
+    0 3.2 1 3.2 ... Length: 185, dtype: str < 4" -- in place of its own
+    explanation. It looked plausible in aggregate and was only visible on
+    inspecting a single value.
+    """
+
+    def test_reason_is_per_row_and_short(self):
+        import pandas as pd
+
+        from admet.screen import rank
+
+        frame = pd.DataFrame(
+            {
+                "smiles": [DIAZEPAM, SUCROSE, ASPIRIN],
+                "pic50": [8.0, 6.0, 7.0],
+                "covalent": [False, False, False],
+            }
+        )
+        annotated = pd.DataFrame([profile(s) for s in frame["smiles"]])
+        merged = frame.drop(columns=["smiles"]).join(annotated)
+        ranked = rank(merged)
+
+        reasons = ranked["cns_blocker"].fillna("").astype(str)
+        assert reasons.str.len().max() < 60, "reason looks like a rendered Series"
+        assert "dtype" not in " ".join(reasons)
+        assert "Length:" not in " ".join(reasons)
+
+    def test_passing_compound_has_no_blocker(self):
+        import pandas as pd
+
+        from admet.screen import rank
+
+        annotated = pd.DataFrame([profile(DIAZEPAM)])
+        annotated["pic50"] = 8.0
+        annotated["covalent"] = False
+        ranked = rank(annotated)
+        assert ranked["cns_blocker"].iloc[0] == ""
