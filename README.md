@@ -33,6 +33,7 @@ either alone ([Wu 2019](https://doi.org/10.1016/j.pneurobio.2019.101730),
 | Compounds both CNS-suitable **and** non-covalent | **6** — but one series, not six leads |
 | Median potency lost entering a cell (n=35, paired) | **1.53 log units, 34-fold** |
 | Compounds with any published counter-screen | **4 of 180** |
+| Compounds gained by searching PubChem too | **+5** — and no measurable model gain |
 
 **The headline result is a negative one.** Only 6 of 180 published compounds are both
 predicted to reach the brain and free of a covalent warhead. Legumain inhibitor
@@ -55,6 +56,12 @@ Three things sharpen that conclusion rather than soften it:
 - **Selectivity is untested for 176 of 180 compounds.** Where it was tested it looks
   good, but 12 of 14 data points are lower bounds ("no inhibition at 50 µM"), not
   measurements. An untested compound is not a selective one.
+- **The data ceiling is real, not an artefact of using one database.** Searching
+  PubChem as well added 5 compounds and 3 scaffolds, and retraining on them changed
+  nothing measurable (p = 0.98). An earlier version of that comparison appeared to show
+  a real improvement; it was leakage from four tautomer duplicates, and it vanished
+  once they were removed. The gap between this dataset and a usable one is hundreds of
+  compounds, not tens ([docs/DATA_EXPANSION.md](docs/DATA_EXPANSION.md)).
 
 Full write-up in [docs/RESULTS.md](docs/RESULTS.md).
 
