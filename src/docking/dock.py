@@ -253,27 +253,33 @@ def screen(
     if limit:
         compounds = compounds.head(limit)
 
-    rows = []
+    # Keyed by compound, seeded with whatever a previous run completed, so the
+    # checkpoint written below is always the union of old and new results.
+    #
+    # Accumulating into a plain list and writing that was wrong once docking
+    # order was shuffled: the list holds only the compounds walked so far, so
+    # each write truncated the checkpoint and discarded finished compounds
+    # that happened to sit later in the shuffled order. With a stable order
+    # the list grew over the same prefix and the fault never showed.
+    results: dict[str, dict] = dict(done)
+
     total = len(compounds)
     for counter, row in enumerate(compounds.itertuples(index=False), start=1):
         identifier = getattr(row, "molecule_chembl_id", None) or f"cmpd_{counter}"
         smiles = row.smiles
 
         if identifier in done:
-            rows.append(done[identifier])
             continue
 
         mol = embed_3d(smiles)
         if mol is None:
-            rows.append(
-                {
-                    "molecule_chembl_id": identifier,
-                    "smiles": smiles,
-                    "affinity": np.nan,
-                    "dist_to_thiol": np.nan,
-                    "status": "embedding_failed",
-                }
-            )
+            results[identifier] = {
+                "molecule_chembl_id": identifier,
+                "smiles": smiles,
+                "affinity": np.nan,
+                "dist_to_thiol": np.nan,
+                "status": "embedding_failed",
+            }
             continue
 
         pose_path = pose_dir / f"{identifier}.sdf"
@@ -287,43 +293,41 @@ def screen(
                 ligand_path, pose_path, box, exhaustiveness
             )
             distance = pose_distance_to_thiol(pose_path, thiol)
-            rows.append(
-                {
-                    "molecule_chembl_id": identifier,
-                    "smiles": smiles,
-                    "affinity": affinities[0] if affinities else np.nan,
-                    "n_poses": len(affinities),
-                    "dist_to_thiol": distance,
-                    "in_active_site": (
-                        distance is not None and distance <= ACTIVE_SITE_CONTACT
-                    ),
-                    "status": "ok" if affinities else "no_pose",
-                }
-            )
+            results[identifier] = {
+                "molecule_chembl_id": identifier,
+                "smiles": smiles,
+                "affinity": affinities[0] if affinities else np.nan,
+                "n_poses": len(affinities),
+                "dist_to_thiol": distance,
+                "in_active_site": (
+                    distance is not None and distance <= ACTIVE_SITE_CONTACT
+                ),
+                "status": "ok" if affinities else "no_pose",
+            }
         except RuntimeError as exc:
-            rows.append(
-                {
-                    "molecule_chembl_id": identifier,
-                    "smiles": smiles,
-                    "affinity": np.nan,
-                    "dist_to_thiol": np.nan,
-                    "status": f"smina_error: {exc}"[:120],
-                }
-            )
+            results[identifier] = {
+                "molecule_chembl_id": identifier,
+                "smiles": smiles,
+                "affinity": np.nan,
+                "dist_to_thiol": np.nan,
+                "status": f"smina_error: {exc}"[:120],
+            }
         finally:
             ligand_path.unlink(missing_ok=True)
 
         # Checkpoint every compound: the per-compound cost is a few
         # milliseconds against 95 seconds of docking, so there is no reason to
         # risk losing work to save it.
-        progress = pd.DataFrame(rows)
+        progress = pd.DataFrame(list(results.values()))
         progress.to_csv(checkpoint, index=False)
 
-        if counter % 10 == 0 or counter == total:
+        if len(results) % 10 == 0 or counter == total:
             ok = int((progress["status"] == "ok").sum())
-            print(f"  {counter}/{total} docked ({ok} scored)", flush=True)
+            print(
+                f"  {len(results)}/{total} docked ({ok} scored)", flush=True
+            )
 
-    return pd.DataFrame(rows)
+    return pd.DataFrame(list(results.values()))
 
 
 def main() -> int:
