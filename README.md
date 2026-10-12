@@ -70,6 +70,7 @@ Full write-up in [docs/RESULTS.md](docs/RESULTS.md).
 | [docs/DOCKING.md](docs/DOCKING.md) | Redocking validation and what it licenses |
 | [docs/SHORTLIST.md](docs/SHORTLIST.md) | Ranked candidate table |
 | [docs/REFERENCES.md](docs/REFERENCES.md) | The biological premise, and the case against it |
+| [docs/DATA_EXPANSION.md](docs/DATA_EXPANSION.md) | Whether more data helped (it did not, measurably) |
 | [docs/PLAN.md](docs/PLAN.md) | Pipeline design |
 
 ## Three things that were nearly wrong

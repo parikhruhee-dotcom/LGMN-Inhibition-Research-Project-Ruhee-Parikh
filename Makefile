@@ -50,6 +50,8 @@ docking:
 
 model:
 	$(PY) src/models/train.py
+	$(PY) src/models/train.py --data data/processed/lgmn_combined.csv --tag _combined
+	$(PY) src/models/compare_datasets.py
 
 admet:
 	$(PY) src/admet/screen.py
