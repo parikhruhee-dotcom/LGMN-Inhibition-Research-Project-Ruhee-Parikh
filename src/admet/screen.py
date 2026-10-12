@@ -537,6 +537,16 @@ def write_doc(df: pd.DataFrame) -> None:
         "- The estimated pKa feeding MPO is a substructure approximation, not "
         "a trained",
         "  model, and is the weakest input to the CNS score.",
+        "- The docking screen covers the ChEMBL modelling set only. Compounds "
+        "added from",
+        "  PubChem carry no docking score, and the composite weights are "
+        "renormalised for",
+        "  them rather than scoring the absence as zero, so they are ranked "
+        "on potency and",
+        "  ADMET alone. Docking carries a weight of 0.15 and did not "
+        "reproduce a known",
+        "  pose, so this changes little, but it is a difference between "
+        "compounds.",
         "",
     ]
     (DOCS / "SHORTLIST.md").write_text("\n".join(lines))
