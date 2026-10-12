@@ -51,7 +51,12 @@ SMINA = CONDA_BIN / "smina"
 OBRMS = CONDA_BIN / "obrms"
 
 REDOCK_RMSD_THRESHOLD = 2.0
-DEFAULT_EXHAUSTIVENESS = 64
+
+# smina's own default is 8. 16 roughly doubles the search without the cost of
+# the 64 used while tuning: on two cores a 36-heavy-atom flexible ligand at 64
+# takes tens of minutes, and the point here is to rank templates against each
+# other, not to extract the last tenth of an angstrom.
+DEFAULT_EXHAUSTIVENESS = 16
 NUM_MODES = 20
 
 # Ligands below this size are fragments: too small to define a pocket and
@@ -70,7 +75,11 @@ def candidate_templates() -> pd.DataFrame:
         & survey["dist_to_catalytic_cys"].le(8.0)
         & survey["ligand_atoms"].ge(10)
     ].copy()
-    return candidates.sort_values(["resolution", "ligand_atoms"])
+    candidates = candidates.sort_values(["resolution", "ligand_atoms"])
+    # The same ligand appears in several entries (WSN in 7FQI, 7FQJ and 7FQL).
+    # Redocking it three times measures the same chemistry at worse
+    # resolution, so keep the best-resolution structure per ligand.
+    return candidates.drop_duplicates(subset=["ligand"], keep="first")
 
 
 def redock(template: dict, exhaustiveness: int) -> dict:
