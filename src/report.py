@@ -327,14 +327,14 @@ def docking_section() -> list[str]:
             lines += [
                 "### Split by mechanism, the picture changes",
                 "",
-                "The whole-set number averages two populations with different "
-                "physics. A",
-                "scoring function has no term for covalent bond formation, so "
+                "The whole-set number averages two populations the scoring "
+                "function treats",
+                "differently. It has no term for covalent bond formation, so "
                 "for the 85% of",
-                "these compounds that inhibit covalently, potency is governed "
-                "by a reaction rate",
-                "the score cannot see. Controlling for ligand size within "
-                "each group:",
+                "these compounds that inhibit covalently, a large part of "
+                "potency is set by a",
+                "reaction rate it cannot see. Controlling for ligand size "
+                "within each group:",
                 "",
                 "| Subset | n | Partial Spearman | p | Survives size control |",
                 "|---|---|---|---|---|",
@@ -347,7 +347,46 @@ def docking_section() -> list[str]:
                 f"{'yes' if cov['survives_size_control'] else 'no'} |",
                 "",
             ]
-            if non_cov["survives_size_control"] and not cov[
+            if non_cov["survives_size_control"] and cov[
+                "survives_size_control"
+            ]:
+                ratio = (
+                    abs(non_cov["partial_rho"]) / abs(cov["partial_rho"])
+                    if cov["partial_rho"]
+                    else float("nan")
+                )
+                lines += [
+                    "Both survive, and the difference in strength is the "
+                    "result. The non-covalent",
+                    f"relationship is about {ratio:.1f} times stronger, which "
+                    "is what the physics",
+                    "predicts: where the scoring function models the whole "
+                    "binding event it does",
+                    "better than where it models only the part preceding a "
+                    "chemical reaction.",
+                    "",
+                    "That covalent compounds show any relationship at all is "
+                    "worth stating, because",
+                    "it was not obvious. The most likely reading is that the "
+                    "score is measuring how",
+                    "well the fragment occupies the pocket before it reacts, "
+                    "and that compounds",
+                    "which sit well also tend to react efficiently. The score "
+                    "correlates with",
+                    "potency without explaining it.",
+                    "",
+                    "**This corrects an earlier conclusion in this project.** "
+                    "At 101 of 180",
+                    "compounds the covalent subset showed no size-controlled "
+                    "relationship, and the",
+                    "shortlist ranking was changed to ignore docking for "
+                    "those compounds. The full",
+                    "data overturned that, and the change was reverted. A "
+                    "result from half a",
+                    "dataset can look settled and still be wrong.",
+                    "",
+                ]
+            elif non_cov["survives_size_control"] and not cov[
                 "survives_size_control"
             ]:
                 lines += [

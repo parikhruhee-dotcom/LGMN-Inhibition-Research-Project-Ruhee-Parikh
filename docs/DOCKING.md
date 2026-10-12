@@ -106,15 +106,32 @@ ability to tell potent compounds from weak ones across a series.
 
 ### Split by mechanism, the picture changes
 
-The whole-set number averages two populations with different physics. A
-scoring function has no term for covalent bond formation, so for the 85% of
-these compounds that inhibit covalently, potency is governed by a reaction rate
-the score cannot see. Controlling for ligand size within each group:
+The whole-set number averages two populations the scoring function treats
+differently. It has no term for covalent bond formation, so for the 85% of
+these compounds that inhibit covalently, a large part of potency is set by a
+reaction rate it cannot see. Controlling for ligand size within each group:
 
 | Subset | n | Partial Spearman | p | Survives size control |
 |---|---|---|---|---|
 | Non-covalent | 27 | -0.497 | 0.00828 | yes |
 | Covalent | 153 | -0.222 | 0.00573 | yes |
+
+Both survive, and the difference in strength is the result. The non-covalent
+relationship is about 2.2 times stronger, which is what the physics
+predicts: where the scoring function models the whole binding event it does
+better than where it models only the part preceding a chemical reaction.
+
+That covalent compounds show any relationship at all is worth stating, because
+it was not obvious. The most likely reading is that the score is measuring how
+well the fragment occupies the pocket before it reacts, and that compounds
+which sit well also tend to react efficiently. The score correlates with
+potency without explaining it.
+
+**This corrects an earlier conclusion in this project.** At 101 of 180
+compounds the covalent subset showed no size-controlled relationship, and the
+shortlist ranking was changed to ignore docking for those compounds. The full
+data overturned that, and the change was reverted. A result from half a
+dataset can look settled and still be wrong.
 
 ### What a top slice would actually give you
 
