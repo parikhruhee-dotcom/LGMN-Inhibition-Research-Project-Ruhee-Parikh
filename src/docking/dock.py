@@ -410,6 +410,15 @@ def main() -> int:
         )
 
         # The direct test: does docking score track measured potency at all?
+        # Only possible when the input carries measured potencies; an
+        # external library being screened prospectively will not.
+        if "pic50" not in compounds.columns:
+            print(
+                "\nInput has no pic50 column, so score-versus-potency cannot "
+                "be measured here."
+            )
+            return 0
+
         merged = scored.merge(
             compounds[["molecule_chembl_id", "pic50"]],
             on="molecule_chembl_id",

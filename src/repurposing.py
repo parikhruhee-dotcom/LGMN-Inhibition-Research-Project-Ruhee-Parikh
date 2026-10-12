@@ -171,6 +171,70 @@ def add_predictions(frame: pd.DataFrame) -> pd.DataFrame:
     return frame
 
 
+def _docking_verdict(shortlist: pd.DataFrame) -> list[str]:
+    """What docking the survivor showed, and why it settles nothing.
+
+    Kept data-driven rather than written as prose, because the numbers moved
+    once already in this project after being quoted as text.
+    """
+    import json
+
+    context_path = PROCESSED / "repurposing_context.json"
+    if "affinity" not in shortlist.columns or shortlist["affinity"].isna().all():
+        return []
+    if not context_path.exists():
+        return []
+
+    context = json.loads(context_path.read_text())
+    row = shortlist.iloc[0]
+    rank = int(shortlist["affinity"].iloc[0] > context["affinity_median"])
+
+    return [
+        "### It was docked, and the result settles nothing",
+        "",
+        f"Caffeine docks into the active site -- "
+        f"{row['dist_to_thiol']:.1f} A from the catalytic thiol -- with a "
+        f"score of {row['affinity']:.2f} kcal/mol.",
+        f"Against the {context['n_non_covalent']} known non-covalent "
+        f"inhibitors, which span "
+        f"{context['affinity_min']:.2f} to {context['affinity_max']:.2f} "
+        f"(median {context['affinity_median']:.2f}), that places it near the "
+        "bottom.",
+        "",
+        "Read quickly, that looks like docking rejecting the compound. It is "
+        "not, and the",
+        "reason is the useful part of this whole exercise.",
+        "",
+        f"Its thio-analogue **{context['neighbour_id']}** -- a real inhibitor "
+        f"with a measured",
+        f"pIC50 of {context['neighbour_pic50']:.2f} -- scores "
+        f"{context['neighbour_affinity']:.2f}, which is *worse* than "
+        "caffeine.",
+        "A genuine, confirmed inhibitor of this target is ranked below a "
+        "compound that",
+        "probably is not one.",
+        "",
+        "So docking cannot distinguish them. The scoring function has no "
+        "information about",
+        "what makes this scaffold work, which is consistent with the thione "
+        "being the",
+        "feature that matters: a sulfur-for-oxygen swap barely changes shape "
+        "or size, and",
+        "shape and size are most of what the score measures.",
+        "",
+        "The honest conclusion is that **three methods here have now failed "
+        "to answer the",
+        "same question.** The model predicts caffeine is active because it "
+        "looks like an",
+        "active compound. Docking ranks it low, but ranks the known active "
+        "lower still.",
+        "Neither is evidence. The question is open and an afternoon of "
+        "enzyme assay would",
+        "close it.",
+        "",
+    ]
+
+
 def write_doc(
     total: int, screened: pd.DataFrame, shortlist: pd.DataFrame
 ) -> None:
@@ -322,6 +386,7 @@ def write_doc(
             "inhibiting legumain, so this is not a rediscovery of something "
             "known.",
             "",
+            *_docking_verdict(shortlist),
         ]
 
     lines += [

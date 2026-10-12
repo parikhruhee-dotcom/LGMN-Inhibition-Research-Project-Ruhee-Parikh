@@ -68,6 +68,30 @@ afternoon, and the expected answer is no.
 A search of PubMed found no published report of caffeine or related xanthines
 inhibiting legumain, so this is not a rediscovery of something known.
 
+### It was docked, and the result settles nothing
+
+Caffeine docks into the active site -- 3.3 A from the catalytic thiol -- with a score of -4.72 kcal/mol.
+Against the 27 known non-covalent inhibitors, which span -7.78 to -4.60 (median -6.61), that places it near the bottom.
+
+Read quickly, that looks like docking rejecting the compound. It is not, and the
+reason is the useful part of this whole exercise.
+
+Its thio-analogue **CHEMBL4092935** -- a real inhibitor with a measured
+pIC50 of 6.74 -- scores -4.48, which is *worse* than caffeine.
+A genuine, confirmed inhibitor of this target is ranked below a compound that
+probably is not one.
+
+So docking cannot distinguish them. The scoring function has no information about
+what makes this scaffold work, which is consistent with the thione being the
+feature that matters: a sulfur-for-oxygen swap barely changes shape or size, and
+shape and size are most of what the score measures.
+
+The honest conclusion is that **three methods here have now failed to answer the
+same question.** The model predicts caffeine is active because it looks like an
+active compound. Docking ranks it low, but ranks the known active lower still.
+Neither is evidence. The question is open and an afternoon of enzyme assay would
+close it.
+
 ## What this does not do
 
 - It does not test binding. No compound here has been docked unless noted, and
