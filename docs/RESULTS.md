@@ -129,13 +129,32 @@ See `docs/SELECTIVITY.md`.
 
 ## What would actually move this forward
 
+Everything that could be settled from public data has been. What remains needs
+either an experiment or a larger dataset.
+
 1. **Test the 6 non-covalent CNS-suitable compounds** against recombinant
-   legumain. Six compounds is a tractable experiment and it would convert the
-   whole project from prediction to evidence.
-2. **Measure selectivity against caspase-3 and cathepsin B** for anything that
-   works, since the warhead chemistry invites cross-reactivity.
-3. **Analyse the enzymatic-to-cellular potency gap** in
-   `data/processed/lgmn_cellular.csv`. Those 74 records are a permeability
-   signal already in hand, and permeability is the project's binding constraint.
-4. **Expand beyond ChEMBL.** 180 compounds is the ceiling on what any model here
-   can learn; patent and PubChem data would raise it.
+   legumain. Six compounds is a tractable experiment and it is the step that
+   converts this project from prediction into evidence. Start with an Ames test
+   on the series, since all six carry an ortho-phenylenediamine.
+2. **Counter-screen anything active against caspase-3 and cathepsin B.** The
+   public data cannot answer this: 176 of 180 compounds have never been tested,
+   and 12 of the 14 existing data points are lower bounds rather than
+   measurements (`docs/SELECTIVITY.md`).
+3. **Measure permeability directly** on the series. The paired enzyme/cell data
+   already in hand shows a median 34-fold loss at an ordinary cell membrane
+   (`docs/PERMEABILITY.md`); a PAMPA or Caco-2 assay would say whether the
+   non-covalent series escapes that pattern or follows it.
+4. **Expand beyond ChEMBL.** 180 compounds across 55 scaffolds -- 4 of which
+   cover half the set -- is the ceiling on what any model here can learn. Patent
+   and PubChem data would raise it.
+
+### Already answered, and where
+
+| Question | Answer | Document |
+|---|---|---|
+| Which structure should docking use? | 7FQI, chosen by measured redocking across all 5 candidates | `TARGET.md`, `DOCKING.md` |
+| Can the docking protocol reproduce a known pose? | No -- sampling finds it, scoring misranks it | `DOCKING.md` |
+| Can potency be predicted for new scaffolds? | Ranked weakly; absolute potency no (R2 < 0) | `RESULTS.md` |
+| Do these compounds reach the inside of a cell? | Median 34-fold potency loss; molecular weight predicts it | `PERMEABILITY.md` |
+| Are they selective over related proteases? | Unknown for 176 of 180 | `SELECTIVITY.md` |
+| Is anything both brain-penetrant and non-covalent? | 6 compounds, but one series with a genotoxicity alert | `SHORTLIST.md` |

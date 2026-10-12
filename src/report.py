@@ -196,6 +196,145 @@ def docking_section() -> list[str]:
                 "",
             ]
 
+    analysis = _read_json(RESULTS / "docking" / "screen_analysis.json")
+    if analysis:
+        lines += [
+            "## Does the score actually track potency?",
+            "",
+            "The redocking result above predicts that it should not: a "
+            "function that cannot",
+            "rank poses of one ligand has little reason to rank ligands. But "
+            "every compound",
+            "here has a published pIC50, so the question can be measured "
+            "instead of argued.",
+            "",
+            "![Docking score vs potency]"
+            "(../results/figures/docking_vs_potency.png)",
+            "",
+        ]
+
+        if not analysis.get("complete"):
+            lines += [
+                "> **This is a partial run.** The numbers below will move as "
+                "the screen",
+                "> finishes.",
+                "",
+            ]
+
+        rep = analysis.get("representativeness") or {}
+        if rep and not rep.get("representative", True):
+            lines += [
+                f"> **The scored subset is not representative.** Its median "
+                f"pIC50 is "
+                f"{rep['subset_median_pic50']:.2f} against "
+                f"{rep['dataset_median_pic50']:.2f} for the full dataset. A "
+                "correlation",
+                "> measured over a restricted potency range is not comparable "
+                "to one over the",
+                "> full range, so treat what follows as provisional.",
+                "",
+            ]
+
+        lines += [
+            f"Scored compounds: **{analysis['n_scored']}**, affinity "
+            f"{analysis['affinity_min']:.2f} to "
+            f"{analysis['affinity_max']:.2f} kcal/mol.",
+            "",
+            "A working scoring function gives a **negative** correlation: a "
+            "more negative",
+            "affinity should mean a more potent compound.",
+            "",
+            "| Subset | n | Spearman | p | Direction |",
+            "|---|---|---|---|---|",
+        ]
+        for entry in analysis.get("correlations", []):
+            if "spearman_rho" not in entry:
+                lines.append(
+                    f"| {entry['subset']} | {entry['n']} | - | - | "
+                    f"{entry.get('note', 'not evaluated')} |"
+                )
+                continue
+            lines.append(
+                f"| {entry['subset']} | {entry['n']} | "
+                f"{entry['spearman_rho']:+.3f} | "
+                f"{entry['spearman_p']:.3g} | "
+                f"{'correct' if entry['direction_correct'] else 'WRONG'} |"
+            )
+
+        size = analysis.get("size_controlled") or {}
+        if size:
+            lines += [
+                "",
+                "### Is it just molecular size?",
+                "",
+                "Vina-family scores grow more negative with ligand size, and "
+                "in this dataset",
+                f"potency also rises with size "
+                f"(rho {size['size_vs_potency_rho']:+.2f}). A score that "
+                "merely tracked size would",
+                "therefore produce a convincing correlation with potency "
+                "while knowing nothing",
+                "about binding.",
+                "",
+                f"- affinity vs heavy atoms: "
+                f"**{size['affinity_vs_size_rho']:+.2f}**",
+                f"- size vs potency: **{size['size_vs_potency_rho']:+.2f}**",
+                f"- affinity vs potency, controlling for size: "
+                f"**{size['partial_rho']:+.3f}** "
+                f"(p={size['partial_p']:.3g})",
+                "",
+            ]
+            if size.get("survives_size_control"):
+                lines += [
+                    "The relationship survives the control, so it is not "
+                    "simply a molecular",
+                    "weight effect. That is a more positive result than the "
+                    "redocking validation",
+                    "predicted, and worth stating plainly in both directions: "
+                    "the scoring",
+                    "function cannot place a ligand correctly in the pocket, "
+                    "yet retains some",
+                    "ability to tell potent compounds from weak ones across a "
+                    "series.",
+                    "",
+                ]
+            else:
+                lines += [
+                    "The relationship does **not** survive the control. The "
+                    "apparent agreement",
+                    "between docking score and potency is an artefact of "
+                    "molecular size, and the",
+                    "scores carry no usable information about binding on this "
+                    "target.",
+                    "",
+                ]
+
+        enrich = analysis.get("enrichment") or {}
+        if enrich.get("enrichment_factor") is not None:
+            lines += [
+                "### What a top slice would actually give you",
+                "",
+                "Virtual screening is used to pick a top slice, not to "
+                "predict potencies, so",
+                "enrichment matters as much as correlation. 'Active' here "
+                "means the top",
+                "quartile of measured potency "
+                f"(pIC50 >= {enrich['active_threshold_pic50']:.2f}); a fixed "
+                "100 nM cut is",
+                "meaningless on a set of published inhibitors where most "
+                "compounds clear it.",
+                "",
+                f"- Top {int(100 * enrich['top_fraction'])}% by docking score: "
+                f"**{100 * enrich['top_active_rate']:.0f}%** are top-quartile "
+                "potent",
+                f"- Whole set: "
+                f"**{100 * enrich['overall_active_rate']:.0f}%**",
+                f"- Enrichment factor: "
+                f"**{enrich['enrichment_factor']:.2f}x** "
+                "(1.0 would be no better than random)",
+                "",
+            ]
+
     lines += [
         "## The deeper limitation",
         "",
@@ -491,22 +630,53 @@ def results_section() -> list[str]:
         "",
         "## What would actually move this forward",
         "",
+        "Everything that could be settled from public data has been. What "
+        "remains needs",
+        "either an experiment or a larger dataset.",
+        "",
         "1. **Test the 6 non-covalent CNS-suitable compounds** against "
         "recombinant",
-        "   legumain. Six compounds is a tractable experiment and it would "
-        "convert the",
-        "   whole project from prediction to evidence.",
-        "2. **Measure selectivity against caspase-3 and cathepsin B** for "
-        "anything that",
-        "   works, since the warhead chemistry invites cross-reactivity.",
-        "3. **Analyse the enzymatic-to-cellular potency gap** in",
-        "   `data/processed/lgmn_cellular.csv`. Those 74 records are a "
-        "permeability",
-        "   signal already in hand, and permeability is the project's binding "
-        "constraint.",
-        "4. **Expand beyond ChEMBL.** 180 compounds is the ceiling on what any "
-        "model here",
-        "   can learn; patent and PubChem data would raise it.",
+        "   legumain. Six compounds is a tractable experiment and it is the "
+        "step that",
+        "   converts this project from prediction into evidence. Start with "
+        "an Ames test",
+        "   on the series, since all six carry an ortho-phenylenediamine.",
+        "2. **Counter-screen anything active against caspase-3 and cathepsin "
+        "B.** The",
+        "   public data cannot answer this: 176 of 180 compounds have never "
+        "been tested,",
+        "   and 12 of the 14 existing data points are lower bounds rather "
+        "than",
+        "   measurements (`docs/SELECTIVITY.md`).",
+        "3. **Measure permeability directly** on the series. The paired "
+        "enzyme/cell data",
+        "   already in hand shows a median 34-fold loss at an ordinary cell "
+        "membrane",
+        "   (`docs/PERMEABILITY.md`); a PAMPA or Caco-2 assay would say "
+        "whether the",
+        "   non-covalent series escapes that pattern or follows it.",
+        "4. **Expand beyond ChEMBL.** 180 compounds across 55 scaffolds -- "
+        "4 of which",
+        "   cover half the set -- is the ceiling on what any model here can "
+        "learn. Patent",
+        "   and PubChem data would raise it.",
+        "",
+        "### Already answered, and where",
+        "",
+        "| Question | Answer | Document |",
+        "|---|---|---|",
+        "| Which structure should docking use? | 7FQI, chosen by measured "
+        "redocking across all 5 candidates | `TARGET.md`, `DOCKING.md` |",
+        "| Can the docking protocol reproduce a known pose? | No -- sampling "
+        "finds it, scoring misranks it | `DOCKING.md` |",
+        "| Can potency be predicted for new scaffolds? | Ranked weakly; "
+        "absolute potency no (R2 < 0) | `RESULTS.md` |",
+        "| Do these compounds reach the inside of a cell? | Median 34-fold "
+        "potency loss; molecular weight predicts it | `PERMEABILITY.md` |",
+        "| Are they selective over related proteases? | Unknown for 176 of "
+        "180 | `SELECTIVITY.md` |",
+        "| Is anything both brain-penetrant and non-covalent? | 6 compounds, "
+        "but one series with a genotoxicity alert | `SHORTLIST.md` |",
         "",
     ]
     return lines

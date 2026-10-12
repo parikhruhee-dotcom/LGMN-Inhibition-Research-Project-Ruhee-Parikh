@@ -67,6 +67,61 @@ non-covalently tests the pocket shape, the box and the preparation, which
 is what the protocol needs to be trusted for; it does not test the bond
 formation, which the scoring function does not model at all.
 
+## Does the score actually track potency?
+
+The redocking result above predicts that it should not: a function that cannot
+rank poses of one ligand has little reason to rank ligands. But every compound
+here has a published pIC50, so the question can be measured instead of argued.
+
+![Docking score vs potency](../results/figures/docking_vs_potency.png)
+
+> **This is a partial run.** The numbers below will move as the screen
+> finishes.
+
+> **The scored subset is not representative.** Its median pIC50 is 9.00 against 7.47 for the full dataset. A correlation
+> measured over a restricted potency range is not comparable to one over the
+> full range, so treat what follows as provisional.
+
+Scored compounds: **41**, affinity -7.78 to -5.55 kcal/mol.
+
+A working scoring function gives a **negative** correlation: a more negative
+affinity should mean a more potent compound.
+
+| Subset | n | Spearman | p | Direction |
+|---|---|---|---|---|
+| all scored compounds | 41 | -0.495 | 0.001 | correct |
+| pose contacts catalytic thiol | 40 | -0.478 | 0.0018 | correct |
+| non-covalent only | 12 | -0.603 | 0.0381 | correct |
+| covalent only | 29 | -0.402 | 0.0305 | correct |
+
+### Is it just molecular size?
+
+Vina-family scores grow more negative with ligand size, and in this dataset
+potency also rises with size (rho +0.40). A score that merely tracked size would
+therefore produce a convincing correlation with potency while knowing nothing
+about binding.
+
+- affinity vs heavy atoms: **-0.31**
+- size vs potency: **+0.40**
+- affinity vs potency, controlling for size: **-0.426** (p=0.00554)
+
+The relationship survives the control, so it is not simply a molecular
+weight effect. That is a more positive result than the redocking validation
+predicted, and worth stating plainly in both directions: the scoring
+function cannot place a ligand correctly in the pocket, yet retains some
+ability to tell potent compounds from weak ones across a series.
+
+### What a top slice would actually give you
+
+Virtual screening is used to pick a top slice, not to predict potencies, so
+enrichment matters as much as correlation. 'Active' here means the top
+quartile of measured potency (pIC50 >= 8.23); a fixed 100 nM cut is
+meaningless on a set of published inhibitors where most compounds clear it.
+
+- Top 10% by docking score: **100%** are top-quartile potent
+- Whole set: **78%**
+- Enrichment factor: **1.28x** (1.0 would be no better than random)
+
 ## The deeper limitation
 
 85% of the compounds in this dataset carry a covalent warhead. Their measured
