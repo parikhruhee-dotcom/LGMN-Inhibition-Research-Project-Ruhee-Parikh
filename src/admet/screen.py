@@ -224,9 +224,21 @@ def make_figure(df: pd.DataFrame) -> None:
     )
     axes[2].axhspan(40, 90, color="#2a9d8f", alpha=0.12)
     axes[2].axvspan(1, 4, color="#2a9d8f", alpha=0.12)
+    in_box = int(
+        (df["clogp"].between(1, 4) & df["tpsa"].between(40, 90)).sum()
+    )
     axes[2].set_xlabel("cLogP")
     axes[2].set_ylabel("TPSA (A$^2$)")
     axes[2].set_title("Property space (shaded = CNS optimum)")
+    # The emptiness of the shaded region is the project's central result, so
+    # it is stated as a number rather than left to the eye.
+    axes[2].annotate(
+        f"{in_box} of {len(df)} compounds\nin the CNS optimum",
+        xy=(0.03, 0.06),
+        xycoords="axes fraction",
+        fontsize=8,
+        color="#1d3557",
+    )
     colourbar = fig.colorbar(axes[2].collections[0], ax=axes[2])
     colourbar.set_label("pIC50", fontsize=8)
 

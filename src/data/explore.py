@@ -72,14 +72,18 @@ def make_figure(df: pd.DataFrame) -> None:
     axes[0, 1].set_title("How concentrated the chemistry is")
 
     # --- potency vs size, the ligand-efficiency view ---
-    axes[1, 0].scatter(
-        df["heavy_atoms"], df["pic50"],
-        c=np.where(covalent, "#e76f51", "#2a9d8f"),
-        s=34, alpha=0.75, edgecolor="none",
-    )
+    for mask, label, colour in (
+        (covalent, "covalent warhead", "#e76f51"),
+        (~covalent, "non-covalent", "#2a9d8f"),
+    ):
+        axes[1, 0].scatter(
+            df.loc[mask, "heavy_atoms"], df.loc[mask, "pic50"],
+            label=label, color=colour, s=34, alpha=0.75, edgecolor="none",
+        )
     axes[1, 0].set_xlabel("Heavy atoms")
     axes[1, 0].set_ylabel("pIC50")
     axes[1, 0].set_title("Potency vs molecular size")
+    axes[1, 0].legend(frameon=False, fontsize=8)
 
     # --- warhead classes ---
     warheads = (
@@ -134,6 +138,14 @@ def write_doc(df: pd.DataFrame) -> None:
         f"- Unique Bemis-Murcko scaffolds: **{df['scaffold'].nunique()}**",
         f"- Scaffolds represented by a single compound: **{singletons}**",
         f"- Scaffolds covering half the dataset: **{half}**",
+        "",
+        f"Those {half} scaffolds carrying half the compounds is the number "
+        "that decides how",
+        "the models must be evaluated. It means a random train/test split "
+        "will almost",
+        "always put close analogues of a test compound into training, and "
+        "measure recall",
+        "of a series rather than prediction of a new one.",
         f"- pIC50 range: **{df['pic50'].min():.2f} to {df['pic50'].max():.2f}** "
         f"(median {df['pic50'].median():.2f}, sd {df['pic50'].std():.2f})",
         "",

@@ -342,10 +342,32 @@ def results_section() -> list[str]:
         cns = shortlist["cns_candidate"].fillna(False).astype(bool)
         covalent = shortlist["covalent"].fillna(False).astype(bool)
         both = int((cns & ~covalent).sum())
+        in_box = int(
+            (
+                shortlist["clogp"].between(1, 4)
+                & shortlist["tpsa"].between(40, 90)
+            ).sum()
+        )
         lines += [
             f"- Profiled: **{len(shortlist)}**",
             f"- Meeting the combined CNS criteria: **{int(cns.sum())}**",
             f"- CNS-suitable **and** non-covalent: **{both}**",
+            f"- Inside the CNS property optimum "
+            f"(cLogP 1-4, TPSA 40-90 A2): **{in_box}**",
+            f"- Median TPSA: **{shortlist['tpsa'].median():.0f} A2**, "
+            f"against an optimum of 40-90",
+            "",
+            "The median compound is roughly 40 A2 more polar than the top of "
+            "the range",
+            "that crosses the blood-brain barrier passively. That single "
+            "number captures",
+            "the problem better than any filter count: this chemistry was "
+            "optimised to bind",
+            "an asparagine-recognising protease pocket, which rewards polar, "
+            "hydrogen-",
+            "bonding groups, and those are the same properties that keep a "
+            "molecule out of",
+            "the brain.",
             "",
             "That last number is the project's real finding, and it is a "
             "negative one.",

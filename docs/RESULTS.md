@@ -58,6 +58,15 @@ training set, so extrapolation is visible rather than implied.
 - Profiled: **180**
 - Meeting the combined CNS criteria: **22**
 - CNS-suitable **and** non-covalent: **6**
+- Inside the CNS property optimum (cLogP 1-4, TPSA 40-90 A2): **4**
+- Median TPSA: **128 A2**, against an optimum of 40-90
+
+The median compound is roughly 40 A2 more polar than the top of the range
+that crosses the blood-brain barrier passively. That single number captures
+the problem better than any filter count: this chemistry was optimised to bind
+an asparagine-recognising protease pocket, which rewards polar, hydrogen-
+bonding groups, and those are the same properties that keep a molecule out of
+the brain.
 
 That last number is the project's real finding, and it is a negative one.
 Legumain inhibitor chemistry is overwhelmingly covalent, peptide-like and
