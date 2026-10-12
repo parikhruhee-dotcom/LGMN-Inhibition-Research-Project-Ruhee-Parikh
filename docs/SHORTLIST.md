@@ -29,11 +29,10 @@ The composite score weights measured potency (0.45), predicted CNS exposure
 own redocking test -- see `docs/DOCKING.md` -- and because, where it does carry
 signal, it is on a subset of fewer than 30 compounds.
 
-**Docking contributes only for non-covalent compounds.** The screen measured that,
-controlling for ligand size, docking score tracks potency within the non-covalent
-subset and not within the covalent one -- the scoring function has no term for
-bond formation. Feeding covalent compounds' scores into the ranking would add noise
-dressed as evidence. Where the docking term is absent for any reason, the remaining
+Docking contributes wherever an active-site pose was obtained. The screen found
+score related to potency in both the covalent and non-covalent subsets once ligand
+size was controlled for, about twice as strongly for non-covalent compounds
+(partial rho -0.50 against -0.22). Where the docking term is missing, the remaining
 weights are renormalised rather than scoring the absence as zero.
 
 ## Top 25 compounds by composite score
@@ -46,31 +45,31 @@ that pass.
 
 | # | ChEMBL ID | pIC50 | CNS | CNS MPO | BBB rules | Covalent | Dock (kcal/mol) | Score |
 |---|---|---|---|---|---|---|---|---|
-| 1 | CHEMBL4545652 | 9.92 | fail | 3.73 | 4/6 | yes | - | 0.814 |
-| 2 | CHEMBL5394077 | 9.70 | fail | 3.76 | 4/6 | no | - | 0.792 |
-| 3 | CHEMBL5425743 | 9.70 | fail | 3.67 | 4/6 | no | - | 0.785 |
-| 4 | CHEMBL5417499 | 9.40 | fail | 4.05 | 4/6 | yes | - | 0.783 |
-| 5 | CHEMBL5420042 | 10.00 | fail | 3.23 | 4/6 | no | - | 0.783 |
-| 6 | CHEMBL5413711 | 10.00 | fail | 3.22 | 4/6 | no | - | 0.782 |
-| 7 | CHEMBL4438891 | 9.59 | fail | 3.73 | 4/6 | yes | - | 0.778 |
-| 8 | CHEMBL5412556 | 9.70 | fail | 3.57 | 4/6 | yes | - | 0.777 |
-| 9 | CHEMBL5402155 | 9.70 | fail | 3.50 | 4/6 | no | - | 0.772 |
-| 10 | CHEMBL5427662 | 9.70 | fail | 3.50 | 3/6 | yes | - | 0.772 |
-| 11 | CHEMBL5399092 | 8.41 | pass | 5.17 | 5/6 | yes | - | 0.766 |
-| 12 | CHEMBL5436295 | 9.00 | fail | 4.35 | 4/6 | yes | - | 0.764 |
-| 13 | CHEMBL5407269 | 9.05 | fail | 4.22 | 4/6 | yes | - | 0.759 |
-| 14 | CHEMBL5415768 | 9.52 | fail | 3.50 | 4/6 | no | - | 0.753 |
-| 15 | CHEMBL5402221 | 9.70 | fail | 3.23 | 4/6 | no | - | 0.751 |
-| 16 | CHEMBL5427707 | 9.00 | pass | 4.18 | 5/6 | yes | - | 0.750 |
-| 17 | CHEMBL5396516 | 9.00 | fail | 3.90 | 4/6 | yes | - | 0.728 |
-| 18 | CHEMBL4556228 | 9.33 | fail | 3.39 | 4/6 | yes | - | 0.723 |
-| 19 | CHEMBL5406157 | 9.10 | fail | 3.69 | 5/6 | yes | - | 0.723 |
-| 20 | CHEMBL5434439 | 8.38 | fail | 4.66 | 4/6 | yes | - | 0.721 |
-| 21 | CHEMBL5419921 | 9.22 | fail | 3.50 | 4/6 | no | - | 0.721 |
-| 22 | CHEMBL5419035 | 8.66 | fail | 4.23 | 3/6 | yes | - | 0.718 |
-| 23 | CHEMBL4549828 | 8.89 | fail | 3.90 | 5/6 | yes | - | 0.717 |
-| 24 | CHEMBL5431473 | 8.47 | fail | 4.46 | 4/6 | yes | - | 0.716 |
-| 25 | CHEMBL5399304 | 9.30 | fail | 3.30 | 3/6 | yes | - | 0.714 |
+| 1 | CHEMBL5413711 | 10.00 | fail | 3.22 | 4/6 | no | -7.71 | 0.812 |
+| 2 | CHEMBL4545652 | 9.92 | fail | 3.73 | 4/6 | yes | -6.77 | 0.798 |
+| 3 | CHEMBL5425743 | 9.70 | fail | 3.67 | 4/6 | no | -7.26 | 0.795 |
+| 4 | CHEMBL5402221 | 9.70 | fail | 3.23 | 4/6 | no | -7.78 | 0.788 |
+| 5 | CHEMBL5420042 | 10.00 | fail | 3.23 | 4/6 | no | -7.12 | 0.786 |
+| 6 | CHEMBL5417499 | 9.40 | fail | 4.05 | 4/6 | yes | -7.02 | 0.782 |
+| 7 | CHEMBL4438891 | 9.59 | fail | 3.73 | 4/6 | yes | -7.10 | 0.781 |
+| 8 | CHEMBL5402155 | 9.70 | fail | 3.50 | 4/6 | no | -6.97 | 0.770 |
+| 9 | CHEMBL5412556 | 9.70 | fail | 3.57 | 4/6 | yes | -6.69 | 0.763 |
+| 10 | CHEMBL5406157 | 9.10 | fail | 3.69 | 5/6 | yes | -7.74 | 0.762 |
+| 11 | CHEMBL5427662 | 9.70 | fail | 3.50 | 3/6 | yes | -6.67 | 0.757 |
+| 12 | CHEMBL5427707 | 9.00 | pass | 4.18 | 5/6 | yes | -6.86 | 0.748 |
+| 13 | CHEMBL5415768 | 9.52 | fail | 3.50 | 4/6 | no | -6.76 | 0.745 |
+| 14 | CHEMBL5394077 | 9.70 | fail | 3.76 | 4/6 | no | -5.93 | 0.743 |
+| 15 | CHEMBL5436295 | 9.00 | fail | 4.35 | 4/6 | yes | -6.48 | 0.742 |
+| 16 | CHEMBL5399092 | 8.41 | pass | 5.17 | 5/6 | yes | -6.38 | 0.739 |
+| 17 | CHEMBL5415184 | 8.77 | fail | 3.87 | 4/6 | yes | -7.60 | 0.738 |
+| 18 | CHEMBL5419921 | 9.22 | fail | 3.50 | 4/6 | no | -7.21 | 0.738 |
+| 19 | CHEMBL4549828 | 8.89 | fail | 3.90 | 5/6 | yes | -7.03 | 0.726 |
+| 20 | CHEMBL5407269 | 9.05 | fail | 4.22 | 4/6 | yes | -6.13 | 0.723 |
+| 21 | CHEMBL5424558 | 8.52 | fail | 4.33 | 4/6 | yes | -7.04 | 0.722 |
+| 22 | CHEMBL5431473 | 8.47 | fail | 4.46 | 4/6 | yes | -6.90 | 0.720 |
+| 23 | CHEMBL4556228 | 9.33 | fail | 3.39 | 4/6 | yes | -6.71 | 0.718 |
+| 24 | CHEMBL5399304 | 9.30 | fail | 3.30 | 3/6 | yes | -6.80 | 0.714 |
+| 25 | CHEMBL5430648 | 8.74 | fail | 3.93 | 4/6 | yes | -6.93 | 0.711 |
 
 ## Non-covalent compounds meeting the CNS criteria
 
@@ -82,8 +81,8 @@ regardless of where they place on the composite score.
 | CHEMBL5183094 | 7.05 | 5.83 | 1.88 | 68 | 333 | 0 |
 | CHEMBL5197937 | 6.30 | 5.83 | 1.66 | 42 | 279 | 0 |
 | CHEMBL5194542 | 6.26 | 5.83 | 1.45 | 60 | 319 | 0 |
-| CHEMBL5185780 | 6.07 | 5.83 | 0.94 | 51 | 263 | 0 |
 | CHEMBL5175987 | 6.12 | 5.27 | 2.38 | 32 | 295 | 0 |
+| CHEMBL5185780 | 6.07 | 5.83 | 0.94 | 51 | 263 | 0 |
 | CHEMBL5208689 | 5.32 | 5.11 | 2.83 | 85 | 404 | 0 |
 
 ### What this set actually is

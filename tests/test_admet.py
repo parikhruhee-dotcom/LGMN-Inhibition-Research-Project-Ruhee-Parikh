@@ -189,7 +189,6 @@ class TestBlockerReason:
     """
 
     def test_reason_is_per_row_and_short(self):
-        import pandas as pd
 
         from admet.screen import rank
 
@@ -210,7 +209,6 @@ class TestBlockerReason:
         assert "Length:" not in " ".join(reasons)
 
     def test_passing_compound_has_no_blocker(self):
-        import pandas as pd
 
         from admet.screen import rank
 
@@ -221,44 +219,69 @@ class TestBlockerReason:
         assert ranked["cns_blocker"].iloc[0] == ""
 
 
-class TestMechanismAwareRanking:
-    """Docking must contribute only where it was shown to carry signal.
+class TestDockingContribution:
+    """Docking contributes wherever an active-site pose exists.
 
-    The screen measured, controlling for ligand size, that docking score
-    tracks potency within the non-covalent subset and not within the covalent
-    one: the scoring function has no term for bond formation, and covalent
-    potency is set by a reaction rate it cannot see. Including covalent
-    docking scores in the ranking would add noise dressed as evidence.
+    An earlier version of the ranking excluded covalent compounds, on the
+    basis of the screen at 101 of 180 compounds where the covalent subset
+    showed no size-controlled relationship. With all 153 covalent compounds
+    scored it does (partial rho -0.222, p=0.006), so the exclusion was
+    removed. These tests pin the behaviour that replaced it.
     """
 
-    def _frame(self):
-        import pandas as pd
+    def _frame(
+        self,
+        affinities=(-9.0, -5.0, -7.0),
+        covalent=(True, False, True),
+    ):
 
         rows = []
-        for smiles, covalent in ((DIAZEPAM, False), (ASPIRIN, True)):
+        for smiles, cov, aff in zip(
+            (DIAZEPAM, ASPIRIN, DIAZEPAM), covalent, affinities
+        ):
             row = profile(smiles)
             row["pic50"] = 8.0
-            row["covalent"] = covalent
-            row["affinity"] = -9.0
+            row["covalent"] = cov
+            row["affinity"] = aff
             row["in_active_site"] = True
             rows.append(row)
         return pd.DataFrame(rows)
 
-    def test_covalent_compound_gets_no_docking_term(self):
+    def test_covalent_compound_now_receives_a_docking_term(self):
+        """The reverted behaviour, asserted directly.
+
+        The previous test for this passed vacuously: both fixture compounds
+        shared one affinity, so normalisation produced NaN regardless of the
+        rule being tested. Distinct affinities make the assertion real.
+        """
         from admet.screen import rank
 
-        ranked = rank(self._frame()).set_index("covalent")
-        assert pd.isna(ranked.loc[True, "docking_norm"])
+        ranked = rank(self._frame())
+        covalent = ranked["covalent"].astype(bool)
+        assert ranked.loc[covalent, "docking_norm"].notna().all()
+        assert ranked.loc[~covalent, "docking_norm"].notna().all()
 
-    def test_non_covalent_compound_keeps_its_docking_term(self):
+    def test_pose_outside_the_active_site_is_excluded(self):
+        """A surface-groove pose says nothing about inhibition.
+
+        Three compounds, so removing one still leaves a range to normalise
+        the rest against; with only one valid score there is no range and
+        every value is left undefined, which is why this needs three.
+        """
         from admet.screen import rank
 
         frame = self._frame()
-        # Two non-covalent compounds so the affinity range is non-degenerate.
-        frame.loc[1, "covalent"] = False
-        frame.loc[1, "affinity"] = -5.0
+        frame.loc[0, "in_active_site"] = False
         ranked = rank(frame)
-        assert ranked["docking_norm"].notna().all()
+        assert ranked["docking_norm"].isna().sum() == 1
+        assert ranked["docking_norm"].notna().sum() == 2
+
+    def test_better_affinity_scores_higher(self):
+        """More negative affinity must map to a higher normalised score."""
+        from admet.screen import rank
+
+        ranked = rank(self._frame()).set_index("affinity")["docking_norm"]
+        assert ranked.loc[-9.0] > ranked.loc[-5.0]
 
     def test_missing_docking_does_not_penalise_a_compound(self):
         """Weights renormalise; absence must not act as a zero score."""
@@ -266,7 +289,6 @@ class TestMechanismAwareRanking:
 
         frame = self._frame()
         with_dock = rank(frame)["composite_score"].to_numpy()
-        frame_no_dock = frame.drop(columns=["affinity"])
-        without = rank(frame_no_dock)["composite_score"].to_numpy()
+        without = rank(frame.drop(columns=["affinity"]))["composite_score"]
         assert (with_dock > 0).all()
-        assert (without > 0).all()
+        assert (without.to_numpy() > 0).all()

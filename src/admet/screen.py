@@ -5,14 +5,12 @@ keeps the sources separate rather than fusing them into one opaque score:
 
 - measured or predicted potency (pIC50)
 - whether the compound is predicted to reach the brain (CNS criteria)
-- its docking score, but only for non-covalent compounds with an active-site
-  pose, since that is the only subset where the screen found docking score to
-  track potency once ligand size was controlled for
+- its docking score, where a pose was obtained in the active site
 
 Covalent chemistry is reported, never used to penalise a compound directly.
-It does decide one thing: whether the docking term applies at all, because a
-scoring function with no term for bond formation cannot say anything useful
-about a compound whose potency is set by a reaction rate.
+The screen found docking score related to potency in both the covalent and
+non-covalent subsets once ligand size was controlled for, about twice as
+strongly in the latter, so the score contributes for both.
 
 Compounds are not silently dropped. Every exclusion is recorded with its
 reason, because for a cysteine protease the usual filters remove exactly the
@@ -122,22 +120,27 @@ def rank(compounds: pd.DataFrame) -> pd.DataFrame:
         (potency - potency.min()) / span if span > 0 else 0.5
     )
 
-    # Docking contributes only where a pose was obtained in the active site
-    # AND the compound binds non-covalently.
+    # Docking contributes wherever a pose was obtained in the active site,
+    # for covalent and non-covalent compounds alike.
     #
-    # The screen measured this directly: controlling for ligand size, docking
-    # score tracks potency within the non-covalent subset and not within the
-    # covalent one, because the scoring function has no term for bond
-    # formation and covalent potency is governed by a reaction rate it cannot
-    # see. Feeding covalent compounds' scores into the ranking adds noise
-    # dressed as evidence, so they are ranked on potency and ADMET alone.
+    # An earlier version excluded covalent compounds. That was based on the
+    # screen at 101 of 180 compounds, where controlling for ligand size left
+    # no significant relationship within the covalent subset. With all 153
+    # covalent compounds scored the relationship is significant (partial rho
+    # -0.222, p=0.006), so the exclusion lost its justification and was
+    # removed.
+    #
+    # The difference in strength is real and worth keeping in view: the
+    # non-covalent relationship is about twice as strong (-0.497). A scoring
+    # function still has no term for bond formation, so for covalent
+    # compounds it is presumably reading how well the fragment occupies the
+    # pocket before reacting, which correlates with potency without
+    # explaining it.
     affinity = df.get("affinity")
     if affinity is not None and affinity.notna().any():
-        non_covalent = ~df["covalent"].fillna(False).astype(bool)
         valid = (
             affinity.notna()
             & df["in_active_site"].fillna(False).astype(bool)
-            & non_covalent
         )
         worst, best = affinity[valid].max(), affinity[valid].min()
         docking_norm = pd.Series(np.nan, index=df.index, dtype=float)
@@ -405,16 +408,14 @@ def write_doc(df: pd.DataFrame) -> None:
         "does carry",
         "signal, it is on a subset of fewer than 30 compounds.",
         "",
-        "**Docking contributes only for non-covalent compounds.** The screen "
-        "measured that,",
-        "controlling for ligand size, docking score tracks potency within the "
-        "non-covalent",
-        "subset and not within the covalent one -- the scoring function has "
-        "no term for",
-        "bond formation. Feeding covalent compounds' scores into the ranking "
-        "would add noise",
-        "dressed as evidence. Where the docking term is absent for any "
-        "reason, the remaining",
+        "Docking contributes wherever an active-site pose was obtained. The "
+        "screen found",
+        "score related to potency in both the covalent and non-covalent "
+        "subsets once ligand",
+        "size was controlled for, about twice as strongly for non-covalent "
+        "compounds",
+        "(partial rho -0.50 against -0.22). Where the docking term is "
+        "missing, the remaining",
         "weights are renormalised rather than scoring the absence as zero.",
         "",
         f"## Top {len(top)} compounds by composite score",
