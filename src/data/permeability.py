@@ -31,6 +31,7 @@ Usage:
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -557,6 +558,30 @@ def main() -> int:
     if not correlations.empty:
         print("\nProperty vs cellular loss:")
         print(correlations.to_string(index=False))
+
+    # Persist the statistics so the report quotes measured values instead of
+    # numbers copied into prose, which go stale silently when data changes.
+    best = (
+        correlations[correlations["significant"]].iloc[0].to_dict()
+        if not correlations.empty and correlations["significant"].any()
+        else {}
+    )
+    (PROCESSED / "permeability_stats.json").write_text(
+        json.dumps(
+            {
+                "n_paired": int(len(paired)),
+                "median_gap": float(paired["cell_gap"].median()),
+                "fold_loss": float(10 ** paired["cell_gap"].median()),
+                "n_losing_tenfold": int((paired["cell_gap"] >= LARGE_GAP).sum()),
+                "best_property": best.get("property"),
+                "best_rho": best.get("spearman_rho"),
+                "best_p_holm": best.get("p_holm"),
+                "translation": shift,
+            },
+            indent=2,
+            default=float,
+        )
+    )
 
     make_figure(paired, correlations)
     write_doc(paired, correlations, shift)

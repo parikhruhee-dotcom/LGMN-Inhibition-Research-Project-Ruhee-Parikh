@@ -23,6 +23,17 @@ DOCS = ROOT / "docs"
 
 MISSING = "_Not run yet._"
 
+# Descriptor column names are terse by design; prose should not be.
+PROPERTY_LABELS = {
+    "mw": "Molecular weight",
+    "clogp": "cLogP",
+    "tpsa": "TPSA",
+    "hbd": "Hydrogen-bond donors",
+    "hba": "Hydrogen-bond acceptors",
+    "rotb": "Rotatable bonds",
+    "fsp3": "Fraction sp3 carbon",
+}
+
 
 def _read_csv(path: Path) -> pd.DataFrame | None:
     return pd.read_csv(path) if path.exists() else None
@@ -446,6 +457,7 @@ def results_section() -> list[str]:
     if permeability is not None and not permeability.empty:
         median_gap = permeability["cell_gap"].median()
         large = int((permeability["cell_gap"] >= 1.0).sum())
+        stats = _read_json(PROCESSED / "permeability_stats.json") or {}
         lines += [
             "## What happens when these compounds meet a membrane",
             "",
@@ -459,8 +471,15 @@ def results_section() -> list[str]:
             f"**{median_gap:.2f} log units** "
             f"({10 ** median_gap:.0f}-fold weaker)",
             f"- Losing 10-fold or more: **{large} of {len(permeability)}**",
-            "- Molecular weight predicts the loss "
-            "(Spearman 0.73, Holm-adjusted p=4e-6)",
+            *(
+                [
+                    f"- {PROPERTY_LABELS.get(stats['best_property'], stats['best_property'])} "
+                    f"predicts the loss (Spearman {stats['best_rho']:.2f}, "
+                    f"Holm-adjusted p={stats['best_p_holm']:.0e})",
+                ]
+                if stats.get("best_property")
+                else []
+            ),
             "",
             "This is the central finding meeting independent evidence. The "
             "compounds are",

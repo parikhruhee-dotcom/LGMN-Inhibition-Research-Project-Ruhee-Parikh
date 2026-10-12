@@ -49,7 +49,7 @@ evidence available here without running an experiment.
 
 - Median potency lost on entering a cell: **1.53 log units** (34-fold weaker)
 - Losing 10-fold or more: **30 of 35**
-- Molecular weight predicts the loss (Spearman 0.73, Holm-adjusted p=4e-6)
+- Molecular weight predicts the loss (Spearman 0.73, Holm-adjusted p=4e-06)
 
 This is the central finding meeting independent evidence. The compounds are
 large and polar because that is what binds an asparagine-recognising protease,
