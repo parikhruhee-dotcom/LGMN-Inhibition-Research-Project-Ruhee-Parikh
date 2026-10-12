@@ -123,6 +123,11 @@ physics applies -- non-covalent binding -- and none where it does not. The
 whole-set figure looks null only because the covalent majority swamps a real
 relationship in the minority.
 
+The caveat is sample size: the non-covalent subset holds 19 compounds,
+and a correlation on that many is suggestive rather than settled. It cannot
+grow much either -- only 27 compounds in the whole dataset are non-covalent,
+which is the same scarcity the rest of this project keeps running into.
+
 It also matters for this project specifically. Every compound on the
 shortlist that is both non-covalent and CNS-suitable falls in the subset where
 docking scores mean something, so the scores can be used to rank those
