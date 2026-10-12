@@ -103,8 +103,6 @@ carrying as an unanswered caveat.
 - Docking did not pass its own redocking test, and its scores carry signal only for
   the 27 non-covalent compounds — a subset too small to settle the question.
 - ADMET predictors are trained on drug-like chemical space and extrapolate poorly.
-- Legumain is a cysteine protease, so most known inhibitors are covalent, and standard
-  non-covalent docking cannot score them meaningfully.
 - Selectivity is unknown for 176 of 180 compounds. Where it was measured it looks
   good, but mostly as lower bounds rather than measurements.
 - **The therapeutic premise is contested in the literature** (Behrendt 2019). Every

@@ -399,10 +399,11 @@ def write_doc(df: pd.DataFrame) -> None:
         "",
         "The composite score weights measured potency (0.45), predicted CNS "
         "exposure",
-        "(0.40) and docking (0.15). Docking is weighted low deliberately -- "
-        "see",
-        "`docs/DOCKING.md` for the redocking validation that justifies "
-        "distrusting it.",
+        "(0.40) and docking (0.15). Docking carries the lowest weight "
+        "because it failed its",
+        "own redocking test -- see `docs/DOCKING.md` -- and because, where it "
+        "does carry",
+        "signal, it is on a subset of fewer than 30 compounds.",
         "",
         "**Docking contributes only for non-covalent compounds.** The screen "
         "measured that,",
