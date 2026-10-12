@@ -20,4 +20,58 @@ what kind of failure occurred:
   *scoring function* could not rank it first. If no pose is right, the search
   never found it -- a box, receptor or ligand-preparation fault.
 
-_Not run yet._
+## Results
+
+| PDB | Ligand | Res (A) | Atoms | Covalent in crystal | Top RMSD | Best RMSD | Best at rank | Verdict |
+|---|---|---|---|---|---|---|---|---|
+| 7FQI | WSN | 1.45 | 36 | yes | 2.24 | 1.47 | 3 | scoring could not rank it |
+| 7FQK | WS9 | 1.97 | 36 | yes | 2.53 | 2.53 | 1 | fail |
+| 5LUA | 5KN | 2.0 | 19 | no | 9.52 | 2.29 | 4 | fail |
+| 5LUB | 3Y7 | 2.1 | 16 | no | 4.85 | 2.73 | 3 | fail |
+| 7FQH | WR9 | 2.18 | 31 | yes | 7.30 | 1.02 | 5 | scoring could not rank it |
+
+## What this licenses
+
+No template reproduced its pose as the **top-ranked** result, but 2
+found it somewhere in the top 20. That is a scoring-function failure rather
+than a broken setup: the search locates the binding mode and then ranks a
+decoy above it.
+
+The consequence is concrete and limiting. Docking scores from this protocol
+cannot be used to rank compounds against each other, because the same
+scoring function that misranks poses of one ligand will misrank ligands.
+They are used here only as a weak filter -- does the compound fit the
+pocket at all, and does its pose contact the catalytic thiol -- and weighted
+accordingly (0.15) in the shortlist.
+
+### Fragments redock worse, as expected
+
+Mean top-pose RMSD for the 2 fragment ligands (<25 heavy atoms) is
+7.18 A, against 4.02 A for the 3 drug-sized ones.
+Small, weakly-bound ligands make shallow contact and empirical scoring
+functions struggle to distinguish their real pose from alternatives. This is
+why the box is sized from the ligand rather than left wide: redocking 5KN
+into 5LUA put the top pose 10.4 A away with 8 A of padding, and 1.4 A was
+reachable at 3 A.
+
+## Selected template
+
+**7FQI / WSN** at 1.45 A (36 heavy atoms).
+
+- top-pose RMSD 2.24 A
+- best-of-20 RMSD 1.47 A
+- validated prospectively: **no**
+
+This ligand is **covalently bound** in the crystal. Redocking it
+non-covalently tests the pocket shape, the box and the preparation, which
+is what the protocol needs to be trusted for; it does not test the bond
+formation, which the scoring function does not model at all.
+
+## The deeper limitation
+
+85% of the compounds in this dataset carry a covalent warhead. Their measured
+potency is dominated by the rate of bond formation with Cys189, and a non-covalent
+scoring function has no term for that. So for most of this dataset a docking
+score is not a weak estimate of potency -- it is an estimate of a different
+quantity (how well the fragment sits in the pocket before reacting). That is
+worth knowing, and it is not what a screening score is usually read as.

@@ -57,20 +57,36 @@ DEFAULT_EXHAUSTIVENESS = 8
 ACTIVE_SITE_CONTACT = 6.0
 
 
-def load_box() -> dict:
-    path = PROCESSED / "docking_box.json"
+def selected_template() -> dict:
+    """The template chosen by validate_protocol.py."""
+    path = PROCESSED / "selected_template.json"
     if not path.exists():
         raise FileNotFoundError(
-            f"{path} not found; run src/docking/prepare_receptor.py first"
+            f"{path} not found; run src/docking/validate_protocol.py first"
         )
     return json.loads(path.read_text())
+
+
+def template_dir() -> Path:
+    return Path(selected_template()["directory"])
+
+
+def load_box() -> dict:
+    path = template_dir() / "box.json"
+    if not path.exists():
+        raise FileNotFoundError(f"{path} not found")
+    return json.loads(path.read_text())
+
+
+def receptor_path() -> Path:
+    return template_dir() / "receptor.pdb"
 
 
 def catalytic_thiol_coord() -> np.ndarray:
     """Coordinates of the catalytic cysteine SG in the prepared receptor."""
     box = load_box()
     structure = PDBParser(QUIET=True).get_structure(
-        "receptor", str(PROCESSED / "receptor.pdb")
+        "receptor", str(receptor_path())
     )
     for chain in next(iter(structure)):
         for residue in chain:
@@ -115,7 +131,7 @@ def run_smina(
     """Dock one ligand file and return the affinity of each returned pose."""
     command = [
         str(SMINA),
-        "--receptor", str(PROCESSED / "receptor.pdb"),
+        "--receptor", str(receptor_path()),
         "--ligand", str(ligand_path),
         "--out", str(out_path),
         "--center_x", str(box["center_x"]),
@@ -165,67 +181,25 @@ def pose_distance_to_thiol(sdf_path: Path, thiol: np.ndarray) -> float | None:
     return None
 
 
-def validate_redocking(exhaustiveness: int) -> dict:
-    """Redock the crystallographic ligand and measure RMSD to its real pose."""
-    box = load_box()
-    reference = PROCESSED / "reference_ligand.sdf"
-    if not reference.exists():
-        raise FileNotFoundError(f"{reference} not found")
+def protocol_status() -> dict:
+    """Report what validate_protocol.py found, without redoing the work.
 
-    RESULTS.mkdir(parents=True, exist_ok=True)
-    redocked = RESULTS / "redocked_reference.sdf"
-
-    print(
-        f"Redocking {box['reference_ligand']} into {box['pdb_id']} "
-        f"(exhaustiveness {exhaustiveness}) ..."
-    )
-    affinities = run_smina(reference, redocked, box, exhaustiveness)
-
-    # obrms compares the docked poses against the crystal coordinates. It
-    # reports one RMSD per pose in the docked file.
-    result = subprocess.run(
-        [str(OBRMS), str(reference), str(redocked)],
-        capture_output=True,
-        text=True,
-    )
-    rmsds = []
-    for line in result.stdout.splitlines():
-        parts = line.strip().rsplit(" ", 1)
-        if len(parts) == 2:
-            try:
-                rmsds.append(float(parts[1]))
-            except ValueError:
-                continue
-
-    thiol = catalytic_thiol_coord()
-    summary = {
-        "pdb_id": box["pdb_id"],
-        "ligand": box["reference_ligand"],
-        "exhaustiveness": exhaustiveness,
-        "top_pose_affinity": affinities[0] if affinities else None,
-        "top_pose_rmsd": rmsds[0] if rmsds else None,
-        "best_pose_rmsd": min(rmsds) if rmsds else None,
-        "n_poses": len(affinities),
-        "threshold": REDOCK_RMSD_THRESHOLD,
-        "top_pose_dist_to_thiol": pose_distance_to_thiol(redocked, thiol),
-    }
-    summary["passed"] = (
-        summary["top_pose_rmsd"] is not None
-        and summary["top_pose_rmsd"] < REDOCK_RMSD_THRESHOLD
-    )
-
-    (RESULTS / "redock_validation.json").write_text(json.dumps(summary, indent=2))
-
-    print(f"  top pose affinity : {summary['top_pose_affinity']} kcal/mol")
-    print(f"  top pose RMSD     : {summary['top_pose_rmsd']} A")
-    print(f"  best pose RMSD    : {summary['best_pose_rmsd']} A  (of {len(rmsds)})")
-    print(f"  dist to Cys SG    : {summary['top_pose_dist_to_thiol']} A")
-    print(
-        f"  verdict           : "
-        f"{'PASS' if summary['passed'] else 'FAIL'} "
-        f"(threshold {REDOCK_RMSD_THRESHOLD} A)"
-    )
-    return summary
+    Redocking lives in validate_protocol.py, which measures every candidate
+    template. Repeating it here would invite the two to disagree.
+    """
+    template = selected_template()
+    validation_path = RESULTS / "protocol_validation.csv"
+    if validation_path.exists():
+        table = pd.read_csv(validation_path)
+        row = table[
+            (table["pdb_id"] == template["pdb_id"])
+            & (table["ligand"] == template["ligand"])
+        ]
+        if not row.empty:
+            template["sampling_found_pose"] = bool(
+                row.iloc[0]["sampling_found_pose"]
+            )
+    return template
 
 
 def screen(
@@ -308,7 +282,6 @@ def screen(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--validate-only", action="store_true")
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument(
         "--exhaustiveness", type=int, default=DEFAULT_EXHAUSTIVENESS
@@ -316,7 +289,7 @@ def main() -> int:
     parser.add_argument(
         "--force",
         action="store_true",
-        help="screen even if redocking validation fails",
+        help="screen even though the protocol did not validate prospectively",
     )
     parser.add_argument(
         "--input",
@@ -327,19 +300,39 @@ def main() -> int:
     args = parser.parse_args()
 
     RESULTS.mkdir(parents=True, exist_ok=True)
+    template = protocol_status()
 
-    validation = validate_redocking(args.exhaustiveness)
-    if args.validate_only:
-        return 0 if validation["passed"] else 2
+    print(
+        f"Template {template['pdb_id']}/{template['ligand']} "
+        f"({template['resolution']} A)"
+    )
+    print(
+        f"  redocking top-pose RMSD {template['top_rmsd']:.2f} A, "
+        f"best-of-20 {template['best_rmsd']:.2f} A"
+    )
 
-    if not validation["passed"] and not args.force:
-        print(
-            "\nRedocking did not reproduce the crystal pose, so docking scores "
-            "from\nthis setup cannot be trusted. Fix the protocol, or pass "
-            "--force to\nscreen anyway and record that caveat.",
-            file=sys.stderr,
+    if not template.get("validated"):
+        message = (
+            "\nThe protocol did NOT reproduce the crystal pose as its "
+            "top-ranked\nresult. Sampling finds the right pose but the "
+            "scoring function ranks a\ndecoy above it, which means these "
+            "scores cannot be used to rank\ncompounds against each other."
         )
-        return 2
+        if not args.force:
+            print(
+                message
+                + "\n\nPass --force to screen anyway and treat the output as "
+                "a pocket-fit\nfilter only.",
+                file=sys.stderr,
+            )
+            return 2
+        print(
+            message
+            + "\n\nProceeding with --force. The screen is run to measure "
+            "directly whether\ndocking score carries any relationship to "
+            "measured potency on this\ntarget; the answer is reported in "
+            "docs/DOCKING.md rather than assumed."
+        )
 
     if not args.input.exists():
         print(f"{args.input} not found", file=sys.stderr)
@@ -365,6 +358,23 @@ def main() -> int:
             f"Poses contacting the catalytic thiol "
             f"(<= {ACTIVE_SITE_CONTACT} A): {in_site}/{len(scored)}"
         )
+
+        # The direct test: does docking score track measured potency at all?
+        merged = scored.merge(
+            compounds[["molecule_chembl_id", "pic50"]],
+            on="molecule_chembl_id",
+            how="inner",
+        )
+        if len(merged) > 5:
+            rho = merged["affinity"].corr(merged["pic50"], method="spearman")
+            print(
+                f"\nSpearman(docking affinity, measured pIC50) = {rho:.3f} "
+                f"over {len(merged)} compounds"
+            )
+            print(
+                "  A more negative affinity should mean higher potency, so a "
+                "working\n  score would give a NEGATIVE correlation here."
+            )
     return 0
 
 
