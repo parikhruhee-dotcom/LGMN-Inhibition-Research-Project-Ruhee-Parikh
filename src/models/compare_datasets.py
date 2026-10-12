@@ -145,29 +145,60 @@ def write_doc(result: dict, n_before: int, n_after: int,
         f"{best_after['mae_mean']:.3f} | {best_after['r2_mean']:+.3f} | "
         f"{best_after['spearman_mean']:.3f} |",
         "",
-        "Read quickly, that says the expansion fixed the model: R2 crossed "
-        "from negative",
-        "to positive, which sounds like the difference between a model that "
-        "is worse than",
-        "guessing the mean and one that is not.",
+    ]
+
+    delta_mae = best_after["mae_mean"] - best_before["mae_mean"]
+    crossed_zero = best_before["r2_mean"] < 0 <= best_after["r2_mean"]
+    direction = "lower" if delta_mae < 0 else "higher"
+
+    if crossed_zero:
+        lines += [
+            "Read quickly, that says the expansion fixed the model: R2 "
+            "crossed from negative",
+            "to positive, which sounds like the difference between a model "
+            "worse than",
+            "guessing the mean and one that is not.",
+            "",
+        ]
+    else:
+        lines += [
+            f"The expanded set gives a {direction} error "
+            f"({best_after['mae_mean']:.3f} against "
+            f"{best_before['mae_mean']:.3f}) and an R2 of "
+            f"{best_after['r2_mean']:+.3f} against "
+            f"{best_before['r2_mean']:+.3f}.",
+            "Both remain negative: on unseen scaffolds neither model beats "
+            "predicting the",
+            "training mean in squared error.",
+            "",
+        ]
+
+    lines += [
+        f"Scaffold-split folds on a set this size vary by about "
+        f"+/-{result['fold_sd']:.2f} log units",
+        f"between themselves, so a difference of {abs(delta_mae):.3f} in the "
+        "mean carries no",
+        f"weight. Comparing the per-fold scores directly gives **p = "
+        f"{result['p_value']:.2f}**, which is "
+        + ("not significant." if not significant else "significant."),
         "",
-        "It is not that. Scaffold-split folds on a set this size vary by "
-        f"about +/-{result['fold_sd']:.2f} log",
-        "units between themselves, so a difference of "
-        f"{abs(best_after['mae_mean'] - best_before['mae_mean']):.3f} in the "
-        "mean carries no weight.",
-        f"Comparing the per-fold scores directly gives **p = "
-        f"{result['p_value']:.2f}**"
-        + (
-            "**, which is not significant.**"
-            if not significant
-            else "**, which is significant.**"
-        ),
-        "",
-        "An R2 of +0.03 is not a model that works. It is a model that is "
-        "indistinguishable",
-        "from predicting the training mean, described with a different sign.",
-        "",
+    ]
+
+    if not crossed_zero:
+        lines += [
+            "This matters more than it looks, because an earlier version of "
+            "this comparison",
+            "did show R2 crossing into positive territory. That run included "
+            "four compounds",
+            "later found to be tautomer duplicates of compounds already in "
+            "the training set.",
+            "Duplicates across folds leak the answer, and removing them "
+            "removed the",
+            "improvement along with them. The apparent gain was the leak.",
+            "",
+        ]
+
+    lines += [
         "## Like-for-like, every configuration",
         "",
         "The best configuration can change between runs for reasons unrelated "

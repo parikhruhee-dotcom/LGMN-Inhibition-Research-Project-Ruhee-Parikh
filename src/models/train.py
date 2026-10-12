@@ -284,7 +284,15 @@ def evaluate(
     return pd.DataFrame(rows), pd.concat(predictions, ignore_index=True)
 
 
-def make_figures(summary: pd.DataFrame, predictions: pd.DataFrame) -> None:
+def make_figures(
+    summary: pd.DataFrame, predictions: pd.DataFrame, tag: str = ""
+) -> None:
+    """Plot model performance.
+
+    `tag` keeps runs on different datasets in separate files; without it a
+    comparison run silently overwrites the main figure, leaving a document
+    whose text and plot describe different datasets.
+    """
     import matplotlib
 
     matplotlib.use("Agg")
@@ -359,7 +367,7 @@ def make_figures(summary: pd.DataFrame, predictions: pd.DataFrame) -> None:
         axes[1].spines[["top", "right"]].set_visible(False)
 
     fig.tight_layout()
-    fig.savefig(FIGURE_DIR / "model_performance.png", dpi=160)
+    fig.savefig(FIGURE_DIR / f"model_performance{tag}.png", dpi=160)
     plt.close(fig)
 
 
@@ -491,8 +499,8 @@ def main() -> int:
         )
         print(f"\nSaved {MODEL_DIR / 'best_model.joblib'}")
 
-    make_figures(summary, predictions)
-    print(f"Saved {FIGURE_DIR / 'model_performance.png'}")
+    make_figures(summary, predictions, args.tag)
+    print(f"Saved {FIGURE_DIR / f'model_performance{args.tag}.png'}")
     return 0
 
 
