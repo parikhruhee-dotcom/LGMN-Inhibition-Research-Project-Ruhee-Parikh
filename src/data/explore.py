@@ -140,6 +140,8 @@ def write_doc(df: pd.DataFrame) -> None:
         f"- Unique Bemis-Murcko scaffolds: **{df['scaffold'].nunique()}**",
         f"- Scaffolds represented by a single compound: **{singletons}**",
         f"- Scaffolds covering half the dataset: **{half}**",
+        f"- pIC50 range: **{df['pic50'].min():.2f} to {df['pic50'].max():.2f}** "
+        f"(median {df['pic50'].median():.2f}, sd {df['pic50'].std():.2f})",
         "",
         f"Those {half} scaffolds carrying half the compounds is the number "
         "that decides how",
@@ -148,8 +150,6 @@ def write_doc(df: pd.DataFrame) -> None:
         "always put close analogues of a test compound into training, and "
         "measure recall",
         "of a series rather than prediction of a new one.",
-        f"- pIC50 range: **{df['pic50'].min():.2f} to {df['pic50'].max():.2f}** "
-        f"(median {df['pic50'].median():.2f}, sd {df['pic50'].std():.2f})",
         "",
         "This is a small dataset by any QSAR standard, and it is not 180",
         "independent observations: the chemistry is concentrated, so a model "
