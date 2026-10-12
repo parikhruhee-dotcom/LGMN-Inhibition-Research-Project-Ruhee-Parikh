@@ -45,6 +45,7 @@ target:
 docking:
 	$(PY) src/docking/validate_protocol.py
 	$(PY) src/docking/dock.py
+	$(PY) src/docking/analyse_screen.py
 
 model:
 	$(PY) src/models/train.py
