@@ -11,8 +11,8 @@ ADMET columns are predictions from 2D structure.
 
 ## What the numbers say overall
 
-- Compounds profiled: **180**
-- Carrying a covalent warhead: **153** (85%)
+- Compounds profiled: **185**
+- Carrying a covalent warhead: **158** (85%)
 - Meeting the combined CNS criteria: **22**
 - Both CNS-suitable *and* non-covalent: **6**
 
@@ -42,8 +42,8 @@ rather than scoring the absence as zero.
 | 6 | CHEMBL5413711 | 10.00 | 3.22 | 4/6 | no | - | 0.782 |
 | 7 | CHEMBL4438891 | 9.59 | 3.73 | 4/6 | yes | - | 0.778 |
 | 8 | CHEMBL5412556 | 9.70 | 3.57 | 4/6 | yes | - | 0.777 |
-| 9 | CHEMBL5427662 | 9.70 | 3.50 | 3/6 | yes | - | 0.772 |
-| 10 | CHEMBL5402155 | 9.70 | 3.50 | 4/6 | no | - | 0.772 |
+| 9 | CHEMBL5402155 | 9.70 | 3.50 | 4/6 | no | - | 0.772 |
+| 10 | CHEMBL5427662 | 9.70 | 3.50 | 3/6 | yes | - | 0.772 |
 | 11 | CHEMBL5399092 | 8.41 | 5.17 | 5/6 | yes | - | 0.766 |
 | 12 | CHEMBL5436295 | 9.00 | 4.35 | 4/6 | yes | - | 0.764 |
 | 13 | CHEMBL5407269 | 9.05 | 4.22 | 4/6 | yes | - | 0.759 |

@@ -24,6 +24,7 @@ Usage:
 
 from __future__ import annotations
 
+import argparse
 import sys
 from pathlib import Path
 
@@ -47,9 +48,15 @@ SHORTLIST_SIZE = 25
 DOCKING_AFFINITY_CUT = -7.0
 
 
-def load_inputs() -> pd.DataFrame:
+def load_inputs(activity_path: Path | None = None) -> pd.DataFrame:
     """Join the activity data with docking results where both exist."""
-    activity_path = PROCESSED / "lgmn_regression.csv"
+    if activity_path is None:
+        # Prefer the combined ChEMBL+PubChem set when it exists, so the
+        # shortlist covers every compound the project knows about.
+        combined = PROCESSED / "lgmn_combined.csv"
+        activity_path = (
+            combined if combined.exists() else PROCESSED / "lgmn_regression.csv"
+        )
     if not activity_path.exists():
         raise FileNotFoundError(
             f"{activity_path} not found; run src/data/prepare_dataset.py"
@@ -530,8 +537,17 @@ def write_doc(df: pd.DataFrame) -> None:
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--data",
+        type=Path,
+        default=None,
+        help="dataset CSV (default: the combined set if present)",
+    )
+    args = parser.parse_args()
+
     RESULTS.mkdir(parents=True, exist_ok=True)
-    compounds = load_inputs()
+    compounds = load_inputs(args.data)
     print(f"Profiling {len(compounds)} compounds ...")
 
     annotated = annotate(compounds)
