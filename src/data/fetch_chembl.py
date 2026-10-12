@@ -3,9 +3,17 @@
 Resolves the ChEMBL target from the UniProt accession rather than a hard-coded
 target ID, then pulls every activity record with a concentration-type endpoint.
 
+Assay-level metadata is fetched alongside the activities because the activity
+records alone cannot distinguish assays that must not be pooled. Every LGMN
+record carries assay_type 'B', including a HEK293-A cell-based assay whose
+IC50s run 1-2 log units weaker than the matching enzymatic ones, and including
+two Schistosoma mansoni assays annotated against the human target. Separating
+those requires bao_format and assay_tax_id, which live on the assay.
+
 Writes:
     data/raw/chembl_lgmn_targets.csv    one row per matching ChEMBL target
     data/raw/chembl_lgmn_activities.csv raw activity records, unfiltered
+    data/raw/chembl_lgmn_assays.csv     assay metadata for every assay seen
 
 Nothing here cleans or filters the data — that happens in prepare_dataset.py, so
 the raw pull stays reproducible and auditable.
@@ -74,6 +82,34 @@ def fetch_activities(target_ids: list[str]) -> pd.DataFrame:
     return pd.concat(frames, ignore_index=True)
 
 
+def fetch_assays(assay_ids: list[str]) -> pd.DataFrame:
+    """Return metadata for the given assays, in batches to keep URLs short."""
+    fields = [
+        "assay_chembl_id",
+        "assay_organism",
+        "assay_tax_id",
+        "assay_cell_type",
+        "assay_tissue",
+        "assay_type",
+        "bao_format",
+        "bao_label",
+        "confidence_score",
+        "description",
+        "target_chembl_id",
+    ]
+    frames = []
+    batch_size = 20
+    for start in range(0, len(assay_ids), batch_size):
+        batch = assay_ids[start : start + batch_size]
+        records = new_client.assay.filter(
+            assay_chembl_id__in=batch
+        ).only(fields)
+        frames.append(pd.DataFrame(list(records)))
+    if not frames:
+        return pd.DataFrame()
+    return pd.concat(frames, ignore_index=True)
+
+
 def main() -> int:
     RAW_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -106,6 +142,17 @@ def main() -> int:
     print(f"Unique compounds: {activities['molecule_chembl_id'].nunique()}")
     print("\nRecords by endpoint type:")
     print(activities["standard_type"].value_counts().head(15).to_string())
+
+    assay_ids = sorted(activities["assay_chembl_id"].dropna().unique())
+    print(f"\nFetching metadata for {len(assay_ids)} assays ...")
+    assays = fetch_assays(assay_ids)
+    assays.to_csv(RAW_DIR / "chembl_lgmn_assays.csv", index=False)
+    if not assays.empty:
+        print(
+            assays[
+                ["assay_chembl_id", "assay_organism", "bao_label", "confidence_score"]
+            ].to_string(index=False)
+        )
 
     usable = activities[activities["standard_type"].isin(CONCENTRATION_TYPES)]
     print(
