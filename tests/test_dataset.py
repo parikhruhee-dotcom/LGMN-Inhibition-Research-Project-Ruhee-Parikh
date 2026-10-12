@@ -142,3 +142,35 @@ class TestReplicateAggregation:
     def test_spread_is_computed_as_max_minus_min(self):
         values = pd.Series([6.0, 7.0, 9.0])
         assert values.max() - values.min() == pytest.approx(3.0)
+
+
+class TestPubChemOutcomeFiltering:
+    """PubChem's concise view drops the relation qualifier.
+
+    A censored ">10 uM" result arrives as the bare number 10, distinguishable
+    only by its Activity Outcome. Reading the value without checking the
+    outcome put 16 fabricated potencies into a first version of the expanded
+    dataset, every one pinned at the assay ceiling and all at the bottom of
+    the potency range where real signal matters most.
+    """
+
+    def test_only_active_rows_carry_a_potency(self):
+        rows = pd.DataFrame(
+            {
+                "Activity Outcome": ["Active", "Unspecified", "Inactive"],
+                "value_um": [0.055, 10.0, 10.0],
+            }
+        )
+        kept = rows[rows["Activity Outcome"].eq("Active")]
+        assert len(kept) == 1
+        assert kept["value_um"].iloc[0] == pytest.approx(0.055)
+
+    def test_ceiling_values_would_land_at_the_dataset_floor(self):
+        """Shows why the contamination was hard to spot by eye.
+
+        10 uM converts to pIC50 5.0, which sits just inside the plausible
+        range, so the fabricated values looked like ordinary weak compounds
+        rather than obvious errors.
+        """
+        assert to_pic50(10.0 * 1000) == pytest.approx(5.0)
+        assert MIN_PIC50 <= 5.0

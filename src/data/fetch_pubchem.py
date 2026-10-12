@@ -65,6 +65,16 @@ UNIPROT = "Q99538"
 
 USABLE_ACTIVITY = {"IC50", "Ki", "Kd", "EC50"}
 
+# Only rows PubChem marks Active carry a real potency.
+#
+# The concise view has no relation qualifier, so a censored ">10 uM" result
+# arrives as the bare number 10. Those rows are marked "Unspecified", and
+# including them injected 16 fabricated potencies -- every one at exactly
+# 10 uM, the assay ceiling -- into a first version of this dataset, all at the
+# bottom of the range where the model most needs real signal. Active rows here
+# have a median of 0.055 uM against exactly 10.0 for Unspecified ones.
+ACTIVE_OUTCOME = "Active"
+
 # Wording that marks an assay as cell-based. Cruder than ChEMBL's bao_format,
 # so it is deliberately broad: a biochemical assay wrongly excluded costs one
 # compound, while a cellular assay wrongly included corrupts the labels.
@@ -161,6 +171,20 @@ def build(activities: pd.DataFrame) -> pd.DataFrame:
         & df["value_um"].gt(0)
         & df["CID"].notna()
     ].copy()
+    if df.empty:
+        return pd.DataFrame()
+
+    # Keep the censored rows for the record; they are evidence of inactivity,
+    # just not of potency.
+    censored = df[df["Activity Outcome"].ne(ACTIVE_OUTCOME)]
+    if not censored.empty:
+        censored.to_csv(RAW / "pubchem_lgmn_censored.csv", index=False)
+        print(
+            f"  excluded {len(censored)} rows not marked Active "
+            f"(median {censored['value_um'].median():.3g} uM, "
+            "almost certainly assay-ceiling values)"
+        )
+    df = df[df["Activity Outcome"].eq(ACTIVE_OUTCOME)]
     if df.empty:
         return pd.DataFrame()
 

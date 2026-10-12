@@ -251,9 +251,14 @@ def evaluate(
                     "r2": (
                         r2_score(y_test, y_pred) if len(y_test) > 2 else np.nan
                     ),
+                    # Undefined when predictions are constant, which is the
+                    # mean baseline by construction, so guard rather than
+                    # emit a warning per fold.
                     "spearman": (
-                        pd.Series(y_test).corr(pd.Series(y_pred), method="spearman")
-                        if len(y_test) > 2
+                        pd.Series(y_test).corr(
+                            pd.Series(y_pred), method="spearman"
+                        )
+                        if len(y_test) > 2 and len(np.unique(y_pred)) > 1
                         else np.nan
                     ),
                 }
