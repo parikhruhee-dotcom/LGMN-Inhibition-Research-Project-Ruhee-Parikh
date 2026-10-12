@@ -79,3 +79,7 @@ finalize:
 	$(PY) src/report.py
 	$(PY) src/report_candidates.py
 	$(PY) src/summary_figure.py
+
+# Screen approved drugs for a new starting point (drug repurposing).
+repurpose:
+	$(PY) src/repurposing.py

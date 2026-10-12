@@ -89,6 +89,7 @@ Full write-up in [docs/RESULTS.md](docs/RESULTS.md).
 The whole project in one figure: `results/figures/project_summary.png`
 
 | [docs/REFERENCES.md](docs/REFERENCES.md) | The biological premise, and the case against it |
+| [docs/REPURPOSING.md](docs/REPURPOSING.md) | Screening approved drugs for a new starting point |
 | [docs/DATA_EXPANSION.md](docs/DATA_EXPANSION.md) | Whether more data helped (it did not, measurably) |
 | [docs/PLAN.md](docs/PLAN.md) | Pipeline design |
 
