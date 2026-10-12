@@ -33,6 +33,7 @@ Usage:
 
 from __future__ import annotations
 
+import argparse
 import sys
 import warnings
 from pathlib import Path
@@ -358,6 +359,27 @@ def make_figures(summary: pd.DataFrame, predictions: pd.DataFrame) -> None:
 
 
 def main() -> int:
+    # Declared before use: argparse reads DATA as its default below.
+    global DATA, MODEL_DIR
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--data",
+        type=Path,
+        default=DATA,
+        help="dataset CSV (default: the ChEMBL-derived modelling set)",
+    )
+    parser.add_argument(
+        "--tag",
+        default="",
+        help="suffix for output files, so runs do not overwrite each other",
+    )
+    args = parser.parse_args()
+
+    DATA = args.data
+    if args.tag:
+        MODEL_DIR = MODEL_DIR.parent / f"models{args.tag}"
+
     if not DATA.exists():
         print(
             f"{DATA} not found. Run src/data/prepare_dataset.py first.",

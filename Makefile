@@ -34,6 +34,7 @@ lint:
 data:
 	$(PY) src/data/fetch_chembl.py
 	$(PY) src/data/prepare_dataset.py
+	$(PY) src/data/fetch_pubchem.py
 	$(PY) src/data/explore.py
 	$(PY) src/data/permeability.py
 	$(PY) src/data/selectivity.py
