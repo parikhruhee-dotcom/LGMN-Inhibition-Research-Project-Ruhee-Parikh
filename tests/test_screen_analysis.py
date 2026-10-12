@@ -137,3 +137,84 @@ class TestEnrichment:
 
     def test_too_few_compounds_returns_a_note(self):
         assert "note" in enrichment(_frame(n=4), 8.0)
+
+
+class TestDatasetComparison:
+    """The statistics behind "did more data help?".
+
+    This comparison produced a wrong answer once already: on a set containing
+    four tautomer duplicates it reported R2 crossing into positive territory,
+    which was leakage rather than learning. These guard the reasoning that
+    now surrounds the numbers.
+    """
+
+    def _runs(self, tmp_path, after_offset: float):
+        """Two fake metrics files differing by a fixed MAE offset."""
+        import numpy as np
+
+        rng = np.random.default_rng(0)
+        frames = {}
+        for name, offset in (("before", 0.0), ("after", after_offset)):
+            rows = []
+            for model in ("random_forest", "xgboost", "ridge", "mean_baseline"):
+                for features in ("both", "morgan"):
+                    base = 1.0 if model == "mean_baseline" else 0.8
+                    for fold in range(5):
+                        rows.append(
+                            {
+                                "model": model,
+                                "features": features,
+                                "split": "scaffold",
+                                "fold": fold,
+                                "mae": base + offset + rng.normal(0, 0.05),
+                                "rmse": 1.0,
+                                "r2": -0.2,
+                                "spearman": 0.4,
+                            }
+                        )
+            directory = tmp_path / name
+            directory.mkdir()
+            frame = pd.DataFrame(rows)
+            frame.to_csv(directory / "metrics.csv", index=False)
+            summary = (
+                frame.groupby(["model", "features", "split"])
+                .agg(
+                    mae_mean=("mae", "mean"),
+                    mae_std=("mae", "std"),
+                    r2_mean=("r2", "mean"),
+                    spearman_mean=("spearman", "mean"),
+                )
+                .reset_index()
+            )
+            summary.to_csv(directory / "summary.csv", index=False)
+            frames[name] = directory
+        return frames["before"], frames["after"]
+
+    def test_detects_a_large_real_improvement(self, tmp_path):
+        from models.compare_datasets import compare
+
+        before, after = self._runs(tmp_path, after_offset=-0.40)
+        result = compare(before, after)
+        assert result["p_value"] < 0.05
+        assert result["improved"] == result["total"]
+
+    def test_does_not_claim_improvement_from_noise(self, tmp_path):
+        """A tiny offset must not be reported as significant.
+
+        This is the case that actually occurred: a 0.009 difference against
+        fold-to-fold spread near 0.5.
+        """
+        from models.compare_datasets import compare
+
+        before, after = self._runs(tmp_path, after_offset=-0.005)
+        result = compare(before, after)
+        assert result["p_value"] > 0.05
+
+    def test_excludes_the_baseline_from_model_comparison(self, tmp_path):
+        """The mean baseline is not a model and must not win the comparison."""
+        from models.compare_datasets import compare
+
+        before, after = self._runs(tmp_path, after_offset=-0.1)
+        result = compare(before, after)
+        assert result["best_before"]["model"] != "mean_baseline"
+        assert "mean_baseline" not in set(result["table"]["model"])
